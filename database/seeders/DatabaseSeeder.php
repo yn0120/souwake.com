@@ -1,0 +1,25 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\AdminModel;
+use App\Models\RoleModel;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class DatabaseSeeder extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        // AdminModel::factory(10)->create();
+
+        $this->call(RolesTableSeeder::class);
+        $this->call(AdminsTableSeeder::class);
+    }
+}

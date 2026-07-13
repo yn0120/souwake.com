@@ -1,0 +1,44 @@
+{
+    "name": "souwake.com",
+    "dockerComposeFile": [
+        "../../../docker-compose.yml",
+        "../../../docker-compose.local.yml"
+    ],
+    "service": "app",
+    "workspaceFolder": "/var/www/html/souwake.com",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "emeraldwalk.runonsave",
+                "open-southeners.laravel-pint",
+                "bmewburn.vscode-intelephense-client",
+                "onecentlin.laravel-blade"
+            ],
+            "settings": {
+                "[php]": {
+                    "editor.defaultFormatter": "open-southeners.laravel-pint",
+                    "editor.formatOnSave": false,
+                    "editor.formatOnSaveMode": "file"
+                },
+                "laravel-pint.executablePath": "/var/www/html/souwake.com/vendor/bin/pint",
+                "laravel-pint.enable": true,
+                "emeraldwalk.runonsave": {
+                    "commands": [
+                        {
+                            "match": "\\.php$",
+                            "cmd": "cd ${workspaceFolder} && ./vendor/bin/pint ${file}",
+                            "isAsync": true
+                        }
+                    ]
+                },
+                "phpstan.enabled": true,
+                "phpstan.executablePath": "./vendor/bin/phpstan",
+                "phpstan.configFile": "./phpstan.neon",
+                "intelephense.diagnostics.undefinedClassConstants": false,
+                "intelephense.diagnostics.undefinedFunctions": false
+            }
+        }
+    },
+    "capAdd": ["SYS_PTRACE"],
+    "remoteUser": "root"
+}
