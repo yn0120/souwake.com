@@ -210,6 +210,20 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+        // 秘密ファイル機能（圧縮・暗号化）専用キュー。動画のffmpegトランスコードはCPU/メモリ負荷が高く、
+        // 本番のRAM（2GB）は限られているため、他のキューと分離した上で同時実行数を絞る。
+        'supervisor-secrets' => [
+            'connection' => 'redis',
+            'queue' => ['secrets'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 512,
+            'tries' => 1,
+            'timeout' => 1800,
+            'nice' => 10,
+        ],
     ],
 
     'environments' => [
@@ -219,11 +233,17 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-secrets' => [
+                'maxProcesses' => 1,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-secrets' => [
+                'maxProcesses' => 1,
             ],
         ],
     ],

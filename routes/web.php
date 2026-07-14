@@ -3,8 +3,14 @@
 use App\Http\Controllers\Office\OfficeAdminsController;
 use App\Http\Controllers\Office\OfficeAuthController;
 use App\Http\Controllers\Office\OfficeRolesController;
+use App\Http\Controllers\Office\OfficeSecretsAuthController;
+use App\Http\Controllers\Office\OfficeSecretsController;
+use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
 use App\Http\Middleware\Office\CheckRoutePermission;
+use App\Http\Middleware\Secrets\EnsureSecretsAdmin;
+use App\Http\Middleware\Secrets\NoStoreCache;
+use App\Http\Middleware\TouchAdminActivity;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RedirectIfNotAuthenticated;
 use App\Http\Middleware\RedirectIfNoUser;
@@ -47,7 +53,7 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
     // 管理者ログアウト
     Route::get('/logout', [OfficeAuthController::class, 'logout'])->name('officeLogout');
 
-    Route::middleware([RedirectIfNotAuthenticated::class.':office', RedirectIfNoUser::class.':office'])->group(function () {
+    Route::middleware([RedirectIfNotAuthenticated::class.':office', RedirectIfNoUser::class.':office', 'touch.activity'])->group(function () {
         Route::middleware([CheckRoutePermission::class])->group(function () {
             // 管理者トップページ
             Route::get('/', [OfficeTopController::class, 'index'])->name('officeTop')->setDefaults(['description' => 'ダッシュボード']);
@@ -118,5 +124,31 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
         // エラーページ
         Route::get('/errors/{code}', [OfficeTopController::class, 'error'])->name('officeError');
+    });
+});
+
+// 秘密ファイル管理機能（office.souwake.com）
+// サイドメニュー・トップページ等からの導線は一切設けず、直接URLアクセスのみとする。
+// admin.souwake.com（通常のOfficeパネル）とは意図的にセッション・ログインを分離しており、
+// CheckRoutePermission（全ルートを自動登録し権限管理画面に一覧表示される）も通さない。
+Route::domain(config('app.env_domain').'office.'.config('app.domain'))->group(function () {
+    Route::middleware([RedirectIfAuthenticated::class])->group(function () {
+        Route::get('/login', [OfficeSecretsAuthController::class, 'loginInput'])->name('officeSecretsLoginInput');
+        Route::post('/login', [OfficeSecretsAuthController::class, 'loginExecute'])->name('officeSecretsLoginExecute');
+    });
+
+    Route::get('/logout', [OfficeSecretsAuthController::class, 'logout'])->name('officeSecretsLogout');
+
+    Route::middleware([
+        RedirectIfNotAuthenticated::class,
+        RedirectIfNoUser::class,
+        EnsureSecretsAdmin::class,
+        TouchAdminActivity::class,
+        NoStoreCache::class,
+    ])->group(function () {
+        Route::get('/secrets', [OfficeSecretsController::class, 'index'])->name('officeSecretsIndex');
+        Route::get('/secrets/view/{id}', [OfficeSecretsController::class, 'view'])->name('officeSecretsView');
+        Route::get('/secrets/upload', [OfficeSecretsUploadController::class, 'input'])->name('officeSecretsUploadInput');
+        Route::post('/secrets/upload', [OfficeSecretsUploadController::class, 'chunk'])->name('officeSecretsUploadChunk');
     });
 });

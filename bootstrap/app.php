@@ -3,6 +3,9 @@
 use App\Mail\ErrorMail;
 use App\Services\EmailService;
 use App\Http\Middleware\Office\CheckRoutePermission;
+use App\Http\Middleware\Secrets\EnsureSecretsAdmin;
+use App\Http\Middleware\Secrets\NoStoreCache;
+use App\Http\Middleware\TouchAdminActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'check.permission' => CheckRoutePermission::class,
+            'secrets.admin' => EnsureSecretsAdmin::class,
+            'secrets.nostore' => NoStoreCache::class,
+            'touch.activity' => TouchAdminActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
