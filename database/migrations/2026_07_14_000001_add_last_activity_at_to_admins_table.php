@@ -12,7 +12,7 @@ return new class extends Migration
     {
         DB::statement(<<<'SQL'
             ALTER TABLE admins
-                ADD COLUMN `last_activity_at` datetime DEFAULT NULL COMMENT '最終アクティビティ日時（秘密ファイル機能の7日抹消判定に使用）' AFTER `terminated_at`
+                ADD COLUMN `last_activity_at` datetime DEFAULT NULL COMMENT '最終アクティビティ日時（ファイル機能の7日抹消判定に使用）' AFTER `terminated_at`
         SQL);
     }
 

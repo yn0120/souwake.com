@@ -5,11 +5,16 @@ use App\Http\Controllers\Office\OfficeAuthController;
 use App\Http\Controllers\Office\OfficeRolesController;
 use App\Http\Controllers\Office\OfficeSecretsAuthController;
 use App\Http\Controllers\Office\OfficeSecretsController;
+use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
 use App\Http\Middleware\Office\CheckRoutePermission;
 use App\Http\Middleware\Secrets\EnsureSecretsAdmin;
 use App\Http\Middleware\Secrets\NoStoreCache;
+use App\Http\Middleware\Secrets\RedirectIfAuthenticatedSecrets;
+use App\Http\Middleware\Secrets\RedirectIfNotAuthenticatedSecrets;
+use App\Http\Middleware\Secrets\RedirectIfNoUserSecrets;
+use App\Http\Middleware\Secrets\RequireSecretsPassword;
 use App\Http\Middleware\TouchAdminActivity;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RedirectIfNotAuthenticated;
@@ -127,12 +132,12 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
     });
 });
 
-// 秘密ファイル管理機能（office.souwake.com）
+// ファイル管理機能（office.souwake.com）
 // サイドメニュー・トップページ等からの導線は一切設けず、直接URLアクセスのみとする。
 // admin.souwake.com（通常のOfficeパネル）とは意図的にセッション・ログインを分離しており、
 // CheckRoutePermission（全ルートを自動登録し権限管理画面に一覧表示される）も通さない。
 Route::domain(config('app.env_domain').'office.'.config('app.domain'))->group(function () {
-    Route::middleware([RedirectIfAuthenticated::class])->group(function () {
+    Route::middleware([RedirectIfAuthenticatedSecrets::class])->group(function () {
         Route::get('/login', [OfficeSecretsAuthController::class, 'loginInput'])->name('officeSecretsLoginInput');
         Route::post('/login', [OfficeSecretsAuthController::class, 'loginExecute'])->name('officeSecretsLoginExecute');
     });
@@ -140,15 +145,23 @@ Route::domain(config('app.env_domain').'office.'.config('app.domain'))->group(fu
     Route::get('/logout', [OfficeSecretsAuthController::class, 'logout'])->name('officeSecretsLogout');
 
     Route::middleware([
-        RedirectIfNotAuthenticated::class,
-        RedirectIfNoUser::class,
+        RedirectIfNotAuthenticatedSecrets::class,
+        RedirectIfNoUserSecrets::class,
         EnsureSecretsAdmin::class,
         TouchAdminActivity::class,
         NoStoreCache::class,
     ])->group(function () {
-        Route::get('/secrets', [OfficeSecretsController::class, 'index'])->name('officeSecretsIndex');
-        Route::get('/secrets/view/{id}', [OfficeSecretsController::class, 'view'])->name('officeSecretsView');
+        // 固定パスワードの入力自体はRequireSecretsPasswordの外に置く（無限リダイレクト防止）
+        Route::get('/secrets/password', [OfficeSecretsPasswordController::class, 'input'])->name('officeSecretsPasswordInput');
+        Route::post('/secrets/password', [OfficeSecretsPasswordController::class, 'verify'])->name('officeSecretsPasswordVerify');
+
         Route::get('/secrets/upload', [OfficeSecretsUploadController::class, 'input'])->name('officeSecretsUploadInput');
         Route::post('/secrets/upload', [OfficeSecretsUploadController::class, 'chunk'])->name('officeSecretsUploadChunk');
+
+        Route::middleware([RequireSecretsPassword::class])->group(function () {
+            Route::get('/secrets', [OfficeSecretsController::class, 'index'])->name('officeSecretsIndex');
+            Route::get('/secrets/list', [OfficeSecretsController::class, 'list'])->name('officeSecretsList');
+            Route::get('/secrets/view/{id}', [OfficeSecretsController::class, 'view'])->name('officeSecretsView');
+        });
     });
 });

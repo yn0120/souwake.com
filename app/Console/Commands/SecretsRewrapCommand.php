@@ -18,7 +18,7 @@ class SecretsRewrapCommand extends Command
 {
     protected $signature = 'secrets:rewrap {--old-key= : ローテーション前のSECRETS_MASTER_KEY（base64、base64:プレフィックス可）}';
 
-    protected $description = 'SECRETS_MASTER_KEYのローテーションに伴い、各秘密ファイルのラップ済み鍵を新しいマスターキーで再ラップする';
+    protected $description = 'SECRETS_MASTER_KEYのローテーションに伴い、各ファイルのラップ済み鍵を新しいマスターキーで再ラップする';
 
     public function handle(): int
     {
@@ -62,7 +62,7 @@ class SecretsRewrapCommand extends Command
                 $success++;
             } catch (\Throwable $e) {
                 $failed++;
-                Utils::log('error', "秘密ファイル鍵の再ラップに失敗 secrets:rewrap#{$file->id}\n".$e->getMessage());
+                Utils::log('error', "ファイル鍵の再ラップに失敗 secrets:rewrap#{$file->id}\n".$e->getMessage());
             }
         }
 

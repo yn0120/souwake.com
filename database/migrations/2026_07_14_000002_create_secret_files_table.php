@@ -12,7 +12,7 @@ return new class extends Migration
     {
         DB::statement(<<<'SQL'
             CREATE TABLE IF NOT EXISTS secret_files (
-                `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '秘密ファイルID',
+                `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'ファイルID',
                 `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '/var/encrypted 配下の実ファイル名（暗号文の識別子。AADにも使用）',
                 `admin_id` bigint unsigned NOT NULL COMMENT 'アップロードした管理者ID admins.id',
                 `original_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '元のファイル名（表示用）',
@@ -29,7 +29,7 @@ return new class extends Migration
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `idx_uniq_uuid` (`uuid`),
                 KEY `idx_use_status` (`status`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='秘密ファイル管理（暗号化保管・7日無操作で完全抹消）'
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ファイル管理（暗号化保管・7日無操作で完全抹消）'
         SQL);
     }
 

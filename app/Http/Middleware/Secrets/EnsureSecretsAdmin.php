@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * 秘密ファイル機能(/secrets, /secrets/upload)にアクセスできるのは
+ * ファイル機能(/secrets, /secrets/upload)にアクセスできるのは
  * config('secrets.admin_id')（既定admins.id=1）の管理者のみ。
  *
  * 既存のOfficeパネルの「権限なし→officeTopへリダイレクト+フラッシュ」という規約とは

@@ -11,19 +11,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * 秘密ファイル機能のデッドマンズスイッチ本体。
+ * ファイル機能のデッドマンズスイッチ本体。
  * 管理者(admins.id=config('secrets.admin_id')、既定1)の最終アクティビティが
- * config('secrets.retention_days')（既定7日）を1秒でも超えたら、秘密ファイルをすべて
+ * config('secrets.retention_days')（既定7日）を1秒でも超えたら、ファイルをすべて
  * 復元不能な形で抹消する。routes/console.phpのSchedule::commandから定期実行される。
  *
- * 抹消の一番の拠り所は「鍵の破棄（crypto-shred）」で、DBの秘密ファイル行を削除した時点で
+ * 抹消の一番の拠り所は「鍵の破棄（crypto-shred）」で、DBのファイル行を削除した時点で
  * 暗号文は計算量的に復元不能になる。ディスク上の暗号文の上書き削除はあくまで防御的な追加策。
  */
 class SecretsEnforceRetentionCommand extends Command
 {
     protected $signature = 'secrets:enforce-retention';
 
-    protected $description = '管理者の最終アクティビティから規定日数を超えた場合、秘密ファイルをすべて復元不能な形で抹消する';
+    protected $description = '管理者の最終アクティビティから規定日数を超えた場合、ファイルをすべて復元不能な形で抹消する';
 
     /** フリーズ状態でHorizonの残ジョブが捌けるのを待つ最大時間（秒） */
     private const DRAIN_TIMEOUT_SECONDS = 300;
@@ -48,8 +48,8 @@ class SecretsEnforceRetentionCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->warn("最終アクティビティから{$retentionDays}日を超過（{$inactiveSeconds}秒経過）。秘密ファイルの抹消を開始します。");
-        Utils::log('info', "秘密ファイル抹消トリガー secrets:enforce-retention inactive_seconds={$inactiveSeconds}");
+        $this->warn("最終アクティビティから{$retentionDays}日を超過（{$inactiveSeconds}秒経過）。ファイルの抹消を開始します。");
+        Utils::log('info', "ファイル抹消トリガー secrets:enforce-retention inactive_seconds={$inactiveSeconds}");
 
         // 新規アップロードの開始・継続を即座に拒否する（以降の新規流入を止めてから抹消する）
         Cache::put('secrets:frozen', true, now()->addHours(2));
@@ -57,7 +57,7 @@ class SecretsEnforceRetentionCommand extends Command
         try {
             $this->drainInFlightUploads();
             $wipedCount = $this->wipeAll();
-            Utils::log('info', "秘密ファイル抹消完了 wiped={$wipedCount}");
+            Utils::log('info', "ファイル抹消完了 wiped={$wipedCount}");
             $this->info("抹消完了: {$wipedCount}件");
         } finally {
             Cache::forget('secrets:frozen');
@@ -86,7 +86,7 @@ class SecretsEnforceRetentionCommand extends Command
     }
 
     /**
-     * 全秘密ファイルを抹消する。DB行の削除（鍵の破棄）を主、ディスク上の暗号文の上書き削除を副とする。
+     * 全ファイルを抹消する。DB行の削除（鍵の破棄）を主、ディスク上の暗号文の上書き削除を副とする。
      * ステージング（平文一時ファイル）も道連れで削除する。
      */
     private function wipeAll(): int

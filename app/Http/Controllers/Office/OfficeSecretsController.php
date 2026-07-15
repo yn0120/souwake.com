@@ -11,22 +11,57 @@ use Illuminate\Support\Facades\Storage;
 
 class OfficeSecretsController extends Controller
 {
-    /**
-     * 秘密ファイル一覧（Stage1は最小構成。無限スクロール/モーダル/ズーム等はStage3で追加）
-     */
+    private const PAGE_SIZE = 100;
+
     public function index(Request $request)
     {
+        $records = SecretFileModel::where('status', 'ready')
+            ->orderByDesc('id')
+            ->limit(self::PAGE_SIZE + 1)
+            ->get(['id', 'original_name', 'mime_type', 'created_at']);
+
+        $hasMore = $records->count() > self::PAGE_SIZE;
+        $records = $records->take(self::PAGE_SIZE);
+
         $assign = [
-            'records' => SecretFileModel::where('status', 'ready')->orderByDesc('id')->paginate(100),
+            'records' => self::toGalleryArray($records),
+            'hasMore' => $hasMore,
         ];
 
         return view('office/secrets/index', compact('assign'));
     }
 
-    /**
-     * 秘密ファイルをチャンク単位で復号しながらストリーミング配信する。
-     * 復号済みの平文をディスク/tmpfsに書き出すことは一切ない。HTTP Rangeに対応し、動画のシークも可能。
-     */
+    public function list(Request $request)
+    {
+        $beforeId = (int) $request->query('before_id', 0);
+
+        $query = SecretFileModel::where('status', 'ready')->orderByDesc('id');
+        if ($beforeId > 0) {
+            $query->where('id', '<', $beforeId);
+        }
+
+        $records = $query->limit(self::PAGE_SIZE + 1)->get(['id', 'original_name', 'mime_type', 'created_at']);
+        $hasMore = $records->count() > self::PAGE_SIZE;
+        $records = $records->take(self::PAGE_SIZE);
+
+        return response()->json([
+            'records' => self::toGalleryArray($records),
+            'has_more' => $hasMore,
+        ]);
+    }
+
+    private static function toGalleryArray($records): array
+    {
+        return $records->map(function ($r) {
+            return [
+                'id' => $r->id,
+                'name' => $r->original_name,
+                'mime_type' => $r->mime_type,
+                'created_at' => optional($r->created_at)->toDateTimeString(),
+            ];
+        })->values()->all();
+    }
+
     public function view(Request $request, $id)
     {
         $file = SecretFileModel::getBy(['id' => $id, 'status' => 'ready', 'method' => 'first']);
@@ -46,7 +81,7 @@ class OfficeSecretsController extends Controller
                 base64_decode($file->key_wrap_tag),
             );
         } catch (\Throwable $e) {
-            Utils::log('error', "秘密ファイルの鍵アンラップに失敗 OfficeSecretsController#view id={$file->id}");
+            Utils::log('error', "ファイルの鍵アンラップに失敗 OfficeSecretsController#view id={$file->id}");
             abort(404);
         }
 
@@ -86,7 +121,7 @@ class OfficeSecretsController extends Controller
                     $plaintext = SecretFileCryptoService::decryptChunk($fileKey, $nonceBase, $i, $isLast, $uuid, $encrypted);
                 } catch (\Throwable $e) {
                     // 改ざん・破損検知。機密情報を含めずログに残し、配信を即座に打ち切る（リトライ・フォールバックはしない）
-                    Utils::log('error', "秘密ファイル復号失敗のため配信を打ち切り uuid={$uuid} chunk={$i}");
+                    Utils::log('error', "ファイル復号失敗のため配信を打ち切り uuid={$uuid} chunk={$i}");
                     break;
                 }
 
@@ -116,11 +151,6 @@ class OfficeSecretsController extends Controller
         return response()->stream($callback, $isPartial ? 206 : 200, $headers);
     }
 
-    /**
-     * Rangeヘッダを解釈する。不正な範囲の場合は[null, null, false]を返す。
-     *
-     * @return array{0: int|null, 1: int|null, 2: bool}
-     */
     private function resolveRange(?string $rangeHeader, int $plainSize): array
     {
         if (! $rangeHeader || ! preg_match('/bytes=(\d*)-(\d*)/', $rangeHeader, $m)) {
@@ -128,7 +158,6 @@ class OfficeSecretsController extends Controller
         }
 
         if ($m[1] === '' && $m[2] !== '') {
-            // サフィックス範囲（末尾Nバイト）
             $suffixLen = (int) $m[2];
             $start = max(0, $plainSize - $suffixLen);
             $end = $plainSize - 1;

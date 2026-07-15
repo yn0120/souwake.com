@@ -47,14 +47,21 @@ class ProcessSecretFileUpload implements ShouldQueue
     public function handle(): void
     {
         if (Cache::get('secrets:frozen')) {
-            Utils::log('info', "秘密ファイル抹消のフリーズ中のため処理を中断 ProcessSecretFileUpload#{$this->secretFileId}");
+            Utils::log('info', "ファイル抹消のフリーズ中のため処理を中断 ProcessSecretFileUpload#{$this->secretFileId}");
 
             return;
         }
 
         /** @var SecretFileModel|null $file */
         $file = SecretFileModel::getBy(['id' => $this->secretFileId, 'method' => 'first']);
-        if (! $file || $file->status === 'ready') {
+        if (! $file) {
+            Utils::log('warning', "ファイルのDB行が見つからないため処理をスキップ ProcessSecretFileUpload#{$this->secretFileId}（既に抹消済み、または作成に失敗した可能性）");
+
+            return;
+        }
+        if ($file->status === 'ready') {
+            Utils::log('info', "既に処理済みのためスキップ ProcessSecretFileUpload#{$this->secretFileId}");
+
             return;
         }
 
@@ -86,7 +93,7 @@ class ProcessSecretFileUpload implements ShouldQueue
             $file->staging_path = null;
             $file->save();
         } catch (\Throwable $e) {
-            Utils::log('error', "秘密ファイルの処理に失敗 ProcessSecretFileUpload#{$this->secretFileId}\n".$e->getMessage());
+            Utils::log('error', "ファイルの処理に失敗 ProcessSecretFileUpload#{$this->secretFileId}\n".$e->getMessage());
             $file->status = 'failed';
             $file->staging_path = null;
             $file->save();

@@ -60,7 +60,7 @@ return [
             'report' => false,
         ],
 
-        // 秘密ファイル機能：暗号化済みファイルの保管先（ローカルは名前付きボリューム、本番はLUKS暗号化ボリュームをbindマウント）
+        // ファイル機能：暗号化済みファイルの保管先（ローカルは名前付きボリューム、本番はLUKS暗号化ボリュームをbindマウント）
         'secrets' => [
             'driver' => 'local',
             'root' => env('SECRETS_STORAGE_PATH', '/var/encrypted'),
@@ -68,7 +68,7 @@ return [
             'report' => false,
         ],
 
-        // 秘密ファイル機能：チャンク再構成・圧縮処理用の平文一時領域（tmpfsではなく通常ディスク。2GB RAM制約下で数GBの動画をメモリに載せないため）
+        // ファイル機能：チャンク再構成・圧縮処理用の平文一時領域（tmpfsではなく通常ディスク。2GB RAM制約下で数GBの動画をメモリに載せないため）
         'secrets_tmp' => [
             'driver' => 'local',
             'root' => storage_path('app/private/secrets-tmp'),

@@ -70,7 +70,7 @@ class OfficeSecretsUploadController extends Controller
         $in = fopen($uploadedFile->getRealPath(), 'rb');
         $out = fopen($stagingPath, $chunkIndex === 0 ? 'wb' : 'ab');
         if ($in === false || $out === false) {
-            Utils::log('error', "秘密ファイルアップロードのチャンク書き込みに失敗 uuid={$uuid} chunk={$chunkIndex}");
+            Utils::log('error', "ファイルアップロードのチャンク書き込みに失敗 uuid={$uuid} chunk={$chunkIndex}");
 
             return response()->json(['error' => '書き込みに失敗しました。'], 500);
         }

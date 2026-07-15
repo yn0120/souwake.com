@@ -5,7 +5,7 @@ namespace App\Services;
 use RuntimeException;
 
 /**
- * 秘密ファイル機能の封筒暗号化（envelope encryption）を担うサービス。
+ * ファイル機能の封筒暗号化（envelope encryption）を担うサービス。
  *
  * - ファイルごとにランダムなファイル鍵を生成し、マスターキー（SECRETS_MASTER_KEY）でラップして保管する。
  * - 本文はチャンク単位（chunk_size）のAES-256-GCMで独立に暗号化・認証する（chunked AEAD）。

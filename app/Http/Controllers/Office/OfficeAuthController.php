@@ -491,7 +491,7 @@ class OfficeAuthController extends Controller
             // ログイン
             Auth::loginUsingId($admin->id);
 
-            // 秘密ファイル機能の7日抹消判定に使うため、ログイン時点のアクティビティも記録する
+            // ファイル機能の7日抹消判定に使うため、ログイン時点のアクティビティも記録する
             DB::table('admins')->where('id', $admin->id)->update(['last_activity_at' => Carbon::now()]);
 
             DB::commit();
@@ -518,7 +518,7 @@ class OfficeAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // 秘密ファイル機能の7日抹消判定に使うため、ログアウト時点のアクティビティも記録する
+        // ファイル機能の7日抹消判定に使うため、ログアウト時点のアクティビティも記録する
         if (Auth::check()) {
             DB::table('admins')->where('id', Auth::id())->update(['last_activity_at' => Carbon::now()]);
         }

@@ -51,9 +51,17 @@
             secretsDropzone.processQueue();
         });
 
+        // parallelUploads:1 + autoProcessQueue:false のため、1件完了しても次のファイルへは自動で進まない。
+        // 完了のたびに残りキューがあれば再度processQueue()を呼び、複数ファイルを順番に送り切る。
+        secretsDropzone.on('complete', function () {
+            if (secretsDropzone.getQueuedFiles().length > 0) {
+                secretsDropzone.processQueue();
+            }
+        });
+
         secretsDropzone.on('queuecomplete', function () {
             if (secretsDropzone.files.length > 0) {
-                // window.location.reload();
+                window.location.reload();
             }
         });
     </script>
