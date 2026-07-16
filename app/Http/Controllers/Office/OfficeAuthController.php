@@ -508,6 +508,11 @@ class OfficeAuthController extends Controller
             return redirect()->route('officeOnetimeInput')->withInput($input)->with('error', '予期せぬエラーが発生しました。時間をおいて再度お試しください。');
         }
 
+        // admins.id = 1 のユーザーはログイン後に家計簿ページへ遷移する
+        if ((int) $admin->id === 1) {
+            return redirect()->route('officeBudgetIndex');
+        }
+
         return redirect()->route('officeTop');
     }
 
