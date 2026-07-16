@@ -121,6 +121,18 @@
                 <i class="menu-icon tf-icons bx bx-key"></i> パスワード管理
             </a>
         </li>
+        {{-- 家計簿（管理者ごとの個人データのため権限判定なしで常時表示） --}}
+        <li class="menu-item {{ request()->route()->named('*officeBudget*') ? 'active' : '' }}">
+            <a href="{{ route('officeBudgetIndex', [], false) }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-wallet"></i> 家計簿
+            </a>
+        </li>
+        {{-- プロフィール編集（管理者ごとの個人データのため権限判定なしで常時表示） --}}
+        <li class="menu-item {{ request()->route()->named('*officeProfile*') ? 'active' : '' }}">
+            <a href="{{ route('officeProfileIndex', [], false) }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user-circle"></i> プロフィール編集
+            </a>
+        </li>
         <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
             <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
         </div>

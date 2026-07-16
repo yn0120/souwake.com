@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Office\OfficeAdminsController;
 use App\Http\Controllers\Office\OfficeAuthController;
+use App\Http\Controllers\Office\OfficeBudgetController;
 use App\Http\Controllers\Office\OfficePasswordManagerController;
+use App\Http\Controllers\Office\OfficeProfileController;
 use App\Http\Controllers\Office\OfficeRolesController;
 use App\Http\Controllers\Office\OfficeSecretsAuthController;
 use App\Http\Controllers\Office\OfficeSecretsController;
@@ -148,6 +150,24 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
         Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemUpdateExecute'])->name('officePasswordManagerItemUpdateExecute');
         // 項目削除（処理）
         Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute');
+
+        // 家計簿（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+        // 入力フォーム
+        Route::get('/budget', [OfficeBudgetController::class, 'index'])->name('officeBudgetIndex');
+        // 登録（処理。スプレッドシートへ保存）
+        Route::post('/budget', [OfficeBudgetController::class, 'submitExecute'])->name('officeBudgetSubmitExecute');
+        // 口座の選択肢を追加（処理）
+        Route::post('/budget/accounts', [OfficeBudgetController::class, 'accountCreateExecute'])->name('officeBudgetAccountCreateExecute');
+        // 科目の選択肢を追加（処理）
+        Route::post('/budget/categories', [OfficeBudgetController::class, 'categoryCreateExecute'])->name('officeBudgetCategoryCreateExecute');
+        // スプレッドシートURLの設定（処理）
+        Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetUpdateExecute'])->name('officeBudgetSpreadsheetUpdateExecute');
+
+        // プロフィール編集（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+        // 入力フォーム
+        Route::get('/profile', [OfficeProfileController::class, 'index'])->name('officeProfileIndex');
+        // 更新（処理）
+        Route::post('/profile', [OfficeProfileController::class, 'updateExecute'])->name('officeProfileUpdateExecute');
     });
 });
 
