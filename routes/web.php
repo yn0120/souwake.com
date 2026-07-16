@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Office\OfficeAdminsController;
 use App\Http\Controllers\Office\OfficeAuthController;
+use App\Http\Controllers\Office\OfficePasswordManagerController;
 use App\Http\Controllers\Office\OfficeRolesController;
 use App\Http\Controllers\Office\OfficeSecretsAuthController;
 use App\Http\Controllers\Office\OfficeSecretsController;
@@ -129,6 +130,24 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
         // エラーページ
         Route::get('/errors/{code}', [OfficeTopController::class, 'error'])->name('officeError');
+
+        // パスワード管理（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+        // 一覧
+        Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex');
+        // 一覧（非同期検索・ソート）
+        Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerList');
+        // サイト登録（処理）
+        Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute');
+        // サイト更新（処理）
+        Route::post('/password-manager/{id}', [OfficePasswordManagerController::class, 'updateExecute'])->name('officePasswordManagerUpdateExecute');
+        // サイト削除（処理）
+        Route::post('/password-manager/{id}/delete', [OfficePasswordManagerController::class, 'deleteExecute'])->name('officePasswordManagerDeleteExecute');
+        // 項目追加（処理）
+        Route::post('/password-manager/{id}/items', [OfficePasswordManagerController::class, 'itemCreateExecute'])->name('officePasswordManagerItemCreateExecute');
+        // 項目更新（処理）
+        Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemUpdateExecute'])->name('officePasswordManagerItemUpdateExecute');
+        // 項目削除（処理）
+        Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute');
     });
 });
 
