@@ -53,7 +53,7 @@
                                         </div>
                                         <div class="col-12 col-md-3 pt-2">
                                             <label class="form-label" for="bdg-amount">金額</label>
-                                            <input type="tel" id="bdg-amount" name="amount" class="form-control" inputmode="numeric" placeholder="9999" required>
+                                            <input type="tel" id="bdg-amount" name="amount" class="form-control" inputmode="numeric" placeholder="9999" required autocomplete="off">
                                         </div>
                                         <div class="col-12 col-md-3 pt-2">
                                             <label class="form-label" for="bdg-account">口座</label>
