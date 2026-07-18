@@ -171,6 +171,13 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
     });
 });
 
+// 結婚式サイト（wedding.souwake.com）
+Route::domain(config('app.env_domain').'wedding.'.config('app.domain'))->group(function () {
+    Route::get('/', function () {
+        echo 'メンテナンス中です。';
+    });
+});
+
 // ファイル管理機能（office.souwake.com）
 // サイドメニュー・トップページ等からの導線は一切設けず、直接URLアクセスのみとする。
 // admin.souwake.com（通常のOfficeパネル）とは意図的にセッション・ログインを分離しており、
