@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class SecretsEnforceRetentionCommand extends Command
 {
-    protected $signature = 'secrets:enforce-retention';
+    protected $signature = 'secrets:enforce-retention {--force : 最終アクティビティの経過日数を無視して即座に全ファイルを抹消する}';
 
     protected $description = '管理者の最終アクティビティから規定日数を超えた場合、ファイルをすべて復元不能な形で抹消する';
 
@@ -35,21 +35,28 @@ class SecretsEnforceRetentionCommand extends Command
         $adminId = (int) config('secrets.admin_id');
         $retentionDays = (int) config('secrets.retention_days', 7);
 
-        $lastActivityAt = DB::table('admins')->where('id', $adminId)->value('last_activity_at');
+        $force = (bool) $this->option('force');
 
-        if (! $lastActivityAt) {
-            // 一度もアクティビティが記録されていない場合は判定不能なため何もしない
-            return self::SUCCESS;
+        if (! $force) {
+            $lastActivityAt = DB::table('admins')->where('id', $adminId)->value('last_activity_at');
+
+            if (! $lastActivityAt) {
+                // 一度もアクティビティが記録されていない場合は判定不能なため何もしない
+                return self::SUCCESS;
+            }
+
+            // Carbon 3ではdiffInSecondsのデフォルトが符号付きに変わったため、絶対値で経過秒数を取る
+            $inactiveSeconds = now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastActivityAt), absolute: true);
+            if ($inactiveSeconds <= $retentionDays * 86400) {
+                return self::SUCCESS;
+            }
+
+            $this->warn("最終アクティビティから{$retentionDays}日を超過（{$inactiveSeconds}秒経過）。ファイルの抹消を開始します。");
+            Utils::log('info', "ファイル抹消トリガー secrets:enforce-retention inactive_seconds={$inactiveSeconds}");
+        } else {
+            $this->warn('--forceが指定されたため、最終アクティビティの経過日数を無視して即座に全ファイルを抹消します。');
+            Utils::log('info', 'ファイル抹消トリガー secrets:enforce-retention --force（手動実行）');
         }
-
-        // Carbon 3ではdiffInSecondsのデフォルトが符号付きに変わったため、絶対値で経過秒数を取る
-        $inactiveSeconds = now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastActivityAt), absolute: true);
-        if ($inactiveSeconds <= $retentionDays * 86400) {
-            return self::SUCCESS;
-        }
-
-        $this->warn("最終アクティビティから{$retentionDays}日を超過（{$inactiveSeconds}秒経過）。ファイルの抹消を開始します。");
-        Utils::log('info', "ファイル抹消トリガー secrets:enforce-retention inactive_seconds={$inactiveSeconds}");
 
         // 新規アップロードの開始・継続を即座に拒否する（以降の新規流入を止めてから抹消する）
         Cache::put('secrets:frozen', true, now()->addHours(2));

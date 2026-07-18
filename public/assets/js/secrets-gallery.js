@@ -203,6 +203,14 @@
             seekTime: 10,
             clickToPlay: false,
         });
+        // Plyrのコンテナはただのdivで動画の縦横比を知らないため、幅いっぱいに広がってしまい
+        // 縦長動画では高さがステージからはみ出す。実際のvideoWidth/videoHeightが分かった時点で
+        // aspect-ratioを設定し、高さ基準で縦横比を保ったまま収まるようにする。
+        video.addEventListener('loadedmetadata', function () {
+            if (plyrInstance && plyrInstance.elements && plyrInstance.elements.container && video.videoWidth && video.videoHeight) {
+                plyrInstance.elements.container.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
+            }
+        });
     }
 
     function renderCurrent() {
