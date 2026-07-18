@@ -33,7 +33,10 @@ class ProcessSecretFileUpload implements ShouldQueue
     private const VIDEO_CRF = 23;
 
     /** @var array<string> 許可するMIMEタイプ */
-    private const ALLOWED_IMAGE_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    private const ALLOWED_IMAGE_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
+
+    /** @var array<string> GD/Intervention Imageが直接デコードできず、事前にJPEGへ変換が必要な画像形式 */
+    private const HEIC_MIME = ['image/heic', 'image/heif'];
 
     private const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/quicktime', 'video/webm'];
 
@@ -79,7 +82,14 @@ class ProcessSecretFileUpload implements ShouldQueue
             $mimeType = self::detectMimeType($stagingPath);
             $compressedPath = $stagingPath.'.compressed';
 
-            if (in_array($mimeType, self::ALLOWED_IMAGE_MIME, true)) {
+            if (in_array($mimeType, self::HEIC_MIME, true)) {
+                $heicJpegPath = self::convertHeicToJpeg($stagingPath);
+                try {
+                    $mimeType = self::compressImage($heicJpegPath, $compressedPath, 'image/jpeg');
+                } finally {
+                    SecureDeleteService::wipeFile($heicJpegPath);
+                }
+            } elseif (in_array($mimeType, self::ALLOWED_IMAGE_MIME, true)) {
                 $mimeType = self::compressImage($stagingPath, $compressedPath, $mimeType);
             } elseif (in_array($mimeType, self::ALLOWED_VIDEO_MIME, true)) {
                 self::compressVideo($stagingPath, $compressedPath);
@@ -148,6 +158,49 @@ class ProcessSecretFileUpload implements ShouldQueue
         $image->save($outputPath, quality: self::IMAGE_QUALITY, format: 'jpg');
 
         return 'image/jpeg';
+    }
+
+    /**
+     * HEIC/HEIF（iPhoneの標準写真形式）はGD/Intervention Imageが直接デコードできないため、
+     * libheif-examples（heif-convert）でJPEGへ変換してから既存の圧縮処理に渡す。
+     */
+    private static function convertHeicToJpeg(string $inputPath): string
+    {
+        $outputPath = $inputPath.'.heic-converted.jpg';
+        $process = new Process([
+            'heif-convert',
+            '-q', (string) self::IMAGE_QUALITY,
+            $inputPath,
+            $outputPath,
+        ]);
+        $process->setTimeout(120);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        if (is_file($outputPath)) {
+            return $outputPath;
+        }
+
+        // 複数画像（サムネイル等の補助画像を含む）を持つHEICの場合、heif-convertは
+        // 指定した出力パスではなく `{basename}-1.jpg`, `{basename}-2.jpg`... の連番で書き出す。
+        // 1枚目（プライマリ画像）のみを採用し、残りは平文のまま残さず消去する。
+        $basename = preg_replace('/\.jpg$/', '', $outputPath);
+        $numbered = glob($basename.'-*.jpg') ?: [];
+        sort($numbered, SORT_NATURAL);
+
+        if (empty($numbered)) {
+            throw new \RuntimeException('HEIC画像の変換に失敗しました。');
+        }
+
+        $primary = array_shift($numbered);
+        foreach ($numbered as $extra) {
+            SecureDeleteService::wipeFile($extra);
+        }
+
+        return $primary;
     }
 
     private static function compressVideo(string $inputPath, string $outputPath): void
