@@ -26,21 +26,23 @@
                             </div>
 
                             {{-- スプレッドシートURL設定 --}}
-                            <div class="card p-4 mb-4">
-                                <h6 class="card-title">保存先スプレッドシート</h6>
-                                <form id="bdg-spreadsheet-form">
-                                    <div class="row">
-                                        <div class="col-12 col-md-8 pt-2">
-                                            <label class="form-label" for="bdg-spreadsheet-url">スプレッドシートURL</label>
-                                            <input type="url" id="bdg-spreadsheet-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." value="{{ $assign['spreadsheetUrl'] }}">
+                            @if (! $assign['spreadsheetUrl'])
+                                <div class="card p-4 mb-4">
+                                    <h6 class="card-title">保存先スプレッドシート</h6>
+                                    <form id="bdg-spreadsheet-form">
+                                        <div class="row">
+                                            <div class="col-12 col-md-8 pt-2">
+                                                <label class="form-label" for="bdg-spreadsheet-url">スプレッドシートURL</label>
+                                                <input type="url" id="bdg-spreadsheet-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." value="{{ $assign['spreadsheetUrl'] }}">
+                                            </div>
+                                            <div class="col-12 col-md-4 pt-2 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-outline-primary">URLを保存</button>
+                                            </div>
                                         </div>
-                                        <div class="col-12 col-md-4 pt-2 d-flex align-items-end">
-                                            <button type="submit" class="btn btn-outline-primary">URLを保存</button>
-                                        </div>
-                                    </div>
-                                    <div class="text-muted small mt-2">※ このスプレッドシートを、サービスアカウントのメールアドレスに編集者権限で共有しておく必要があります。</div>
-                                </form>
-                            </div>
+                                        <div class="text-muted small mt-2">※ このスプレッドシートを、サービスアカウントのメールアドレスに編集者権限で共有しておく必要があります。</div>
+                                    </form>
+                                </div>
+                            @endif
 
                             {{-- 入力フォーム --}}
                             <div class="card p-5">
