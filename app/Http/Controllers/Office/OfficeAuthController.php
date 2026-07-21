@@ -12,7 +12,6 @@ use App\Libraries\Utils;
 use App\Mail\Office\ForgotPwMail;
 use App\Mail\Office\OnetimeKeyMail;
 use App\Mail\Office\SetPwMail;
-use App\Services\EmailService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -375,18 +374,7 @@ class OfficeAuthController extends Controller
                 $subject = 'ワンタイムキー発行のお知らせ';
                 $to = $admin->email;
                 $data = ['assign' => ['admin' => $admin, 'onetimeKey' => $onetimeKey]];
-                if (config('app.env') === 'local') {
-                    Mail::to($to)->queue(new OnetimeKeyMail($subject, $data));
-                } else {
-                    $messageId = EmailService::queueEmail([
-                        'from' => config('mail.from.address'),
-                        'to' => $to,
-                        'subject' => $subject,
-                        'body' => view('office/auth/login/notice', $data)->render(),
-                    ]);
-
-                    Utils::log('info', 'MAIL QUEUE ログイン（処理） '.__METHOD__.'#'.__LINE__." >>> messageId: {$messageId}");
-                }
+                Mail::to($to)->queue(new OnetimeKeyMail($subject, $data));
 
                 DB::commit();
             } catch (QueryException $e) {

@@ -9,7 +9,6 @@ use App\Http\Requests\Office\Admin\EditRequest;
 use App\Libraries\Utils;
 use App\Mail\Office\AdminCreateMail;
 use App\Models\RoleModel;
-use App\Services\EmailService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -473,18 +472,7 @@ class OfficeAdminsController extends Controller
             $subject = 'アカウント発行完了のお知らせ';
             $to = $admin->email;
             $data = ['assign' => ['admin' => $admin, 'url' => $url]];
-            if (config('app.env') === 'local') {
-                Mail::to($to)->queue(new AdminCreateMail($subject, $data));
-            } else {
-                $messageId = EmailService::queueEmail([
-                    'from' => config('mail.from.address'),
-                    'to' => $to,
-                    'subject' => $subject,
-                    'body' => view('office/admins/create/notice', $data)->render(),
-                ]);
-
-                Utils::log('info', 'MAIL QUEUE 管理者パスワード再通知（処理） '.__METHOD__.'#'.__LINE__." >>> messageId: {$messageId}");
-            }
+            Mail::to($to)->queue(new AdminCreateMail($subject, $data));
 
             DB::commit();
         } catch (QueryException $e) {
