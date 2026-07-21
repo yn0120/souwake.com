@@ -71,8 +71,8 @@
         loading = true;
         sentinelEl.style.display = '';
 
-        var lastId = files.length ? files[files.length - 1].id : 0;
-        fetch(config.listUrl + '?before_id=' + lastId, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+        var lastName = files.length ? files[files.length - 1].name : '';
+        fetch(config.listUrl + '?before_name=' + encodeURIComponent(lastName), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 appendRecords(data.records || []);
