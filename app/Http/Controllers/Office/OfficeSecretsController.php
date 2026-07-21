@@ -16,7 +16,7 @@ class OfficeSecretsController extends Controller
     public function index(Request $request)
     {
         $records = SecretFileModel::where('status', 'ready')
-            ->orderByDesc('id')
+            ->orderBy('original_name')
             ->limit(self::PAGE_SIZE + 1)
             ->get(['id', 'original_name', 'mime_type', 'created_at']);
 
