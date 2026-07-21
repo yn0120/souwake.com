@@ -57,6 +57,7 @@ class SecureDeleteService
 
     /**
      * ディレクトリ配下の全ファイルをwipeFile()で削除する（ディレクトリ自体は残す）。
+     * .gitkeepはgit管理用のプレースホルダーのため対象外とする。
      */
     public static function wipeDirectoryContents(string $absoluteDirectoryPath): void
     {
@@ -66,7 +67,7 @@ class SecureDeleteService
 
         $items = @scandir($absoluteDirectoryPath) ?: [];
         foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
+            if ($item === '.' || $item === '..' || $item === '.gitkeep') {
                 continue;
             }
 
