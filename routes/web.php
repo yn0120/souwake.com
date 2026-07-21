@@ -61,7 +61,7 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
     // 管理者ログアウト
     Route::get('/logout', [OfficeAuthController::class, 'logout'])->name('officeLogout');
 
-    Route::middleware([RedirectIfNotAuthenticated::class.':office', RedirectIfNoUser::class.':office', 'touch.activity'])->group(function () {
+    Route::middleware([RedirectIfNotAuthenticated::class.':office', RedirectIfNoUser::class.':office', TouchAdminActivity::class])->group(function () {
         Route::middleware([CheckRoutePermission::class])->group(function () {
             // 管理者トップページ
             Route::get('/', [OfficeTopController::class, 'index'])->name('officeTop')->setDefaults(['description' => 'ダッシュボード']);
@@ -128,46 +128,46 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
             // 管理者削除（処理）
             Route::post('/admins/{id}/delete', [OfficeAdminsController::class, 'deleteExecute'])->name('officeAdminDeleteExecute')->setDefaults(['description' => '管理者削除']);
+
+            // パスワード管理（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+            // 一覧
+            Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex');
+            // 一覧（非同期検索・ソート）
+            Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerList');
+            // サイト登録（処理）
+            Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute');
+            // サイト更新（処理）
+            Route::post('/password-manager/{id}', [OfficePasswordManagerController::class, 'updateExecute'])->name('officePasswordManagerUpdateExecute');
+            // サイト削除（処理）
+            Route::post('/password-manager/{id}/delete', [OfficePasswordManagerController::class, 'deleteExecute'])->name('officePasswordManagerDeleteExecute');
+            // 項目追加（処理）
+            Route::post('/password-manager/{id}/items', [OfficePasswordManagerController::class, 'itemCreateExecute'])->name('officePasswordManagerItemCreateExecute');
+            // 項目更新（処理）
+            Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemUpdateExecute'])->name('officePasswordManagerItemUpdateExecute');
+            // 項目削除（処理）
+            Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute');
+
+            // 家計簿（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+            // 入力フォーム
+            Route::get('/budget', [OfficeBudgetController::class, 'index'])->name('officeBudgetIndex');
+            // 登録（処理。スプレッドシートへ保存）
+            Route::post('/budget', [OfficeBudgetController::class, 'submitExecute'])->name('officeBudgetSubmitExecute');
+            // 口座の選択肢を追加（処理）
+            Route::post('/budget/accounts', [OfficeBudgetController::class, 'accountCreateExecute'])->name('officeBudgetAccountCreateExecute');
+            // 科目の選択肢を追加（処理）
+            Route::post('/budget/categories', [OfficeBudgetController::class, 'categoryCreateExecute'])->name('officeBudgetCategoryCreateExecute');
+            // スプレッドシートURLの設定（処理）
+            Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetUpdateExecute'])->name('officeBudgetSpreadsheetUpdateExecute');
+
+            // プロフィール編集（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
+            // 入力フォーム
+            Route::get('/profile', [OfficeProfileController::class, 'index'])->name('officeProfileIndex');
+            // 更新（処理）
+            Route::post('/profile', [OfficeProfileController::class, 'updateExecute'])->name('officeProfileUpdateExecute');
         });
 
         // エラーページ
         Route::get('/errors/{code}', [OfficeTopController::class, 'error'])->name('officeError');
-
-        // パスワード管理（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-        // 一覧
-        Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex');
-        // 一覧（非同期検索・ソート）
-        Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerList');
-        // サイト登録（処理）
-        Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute');
-        // サイト更新（処理）
-        Route::post('/password-manager/{id}', [OfficePasswordManagerController::class, 'updateExecute'])->name('officePasswordManagerUpdateExecute');
-        // サイト削除（処理）
-        Route::post('/password-manager/{id}/delete', [OfficePasswordManagerController::class, 'deleteExecute'])->name('officePasswordManagerDeleteExecute');
-        // 項目追加（処理）
-        Route::post('/password-manager/{id}/items', [OfficePasswordManagerController::class, 'itemCreateExecute'])->name('officePasswordManagerItemCreateExecute');
-        // 項目更新（処理）
-        Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemUpdateExecute'])->name('officePasswordManagerItemUpdateExecute');
-        // 項目削除（処理）
-        Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute');
-
-        // 家計簿（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-        // 入力フォーム
-        Route::get('/budget', [OfficeBudgetController::class, 'index'])->name('officeBudgetIndex');
-        // 登録（処理。スプレッドシートへ保存）
-        Route::post('/budget', [OfficeBudgetController::class, 'submitExecute'])->name('officeBudgetSubmitExecute');
-        // 口座の選択肢を追加（処理）
-        Route::post('/budget/accounts', [OfficeBudgetController::class, 'accountCreateExecute'])->name('officeBudgetAccountCreateExecute');
-        // 科目の選択肢を追加（処理）
-        Route::post('/budget/categories', [OfficeBudgetController::class, 'categoryCreateExecute'])->name('officeBudgetCategoryCreateExecute');
-        // スプレッドシートURLの設定（処理）
-        Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetUpdateExecute'])->name('officeBudgetSpreadsheetUpdateExecute');
-
-        // プロフィール編集（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-        // 入力フォーム
-        Route::get('/profile', [OfficeProfileController::class, 'index'])->name('officeProfileIndex');
-        // 更新（処理）
-        Route::post('/profile', [OfficeProfileController::class, 'updateExecute'])->name('officeProfileUpdateExecute');
     });
 });
 
