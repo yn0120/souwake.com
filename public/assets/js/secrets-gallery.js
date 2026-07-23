@@ -305,7 +305,6 @@
         var pinchStartScale = 1;
         var dragStart = null;
         var moved = false;
-        var lastTapAt = 0;
 
         function dist(p1, p2) {
             return Math.hypot(p1.x - p2.x, p1.y - p2.y);
@@ -396,25 +395,13 @@
                 }
             } else {
                 // 画像: ズーム中は移動のみ（パン扱い）、そうでなければタップ/スワイプでナビゲート
+                // （ダブルクリック/ダブルタップでのズームは意図せず拡大されるため廃止。
+                // ピンチズームのみ許可する）
                 if (zoomState.scale <= 1) {
                     if (moved && Math.abs(dx) > SWIPE_THRESHOLD) {
                         navigate(dx < 0 ? 1 : -1);
                     } else if (!moved) {
-                        var now = Date.now();
-                        if (now - lastTapAt < 300) {
-                            // ダブルタップ: ズームのトグル（dblclickも別途処理するが、タッチ端末用に補完）
-                            var imgElTap = stageEl.querySelector('img');
-                            if (imgElTap) {
-                                zoomState.scale = zoomState.scale > 1 ? 1 : 2.5;
-                                zoomState.x = 0;
-                                zoomState.y = 0;
-                                applyZoom(imgElTap);
-                            }
-                            lastTapAt = 0;
-                        } else {
-                            lastTapAt = now;
-                            navigate(isLeftHalf ? -1 : 1);
-                        }
+                        navigate(isLeftHalf ? -1 : 1);
                     }
                 }
             }
@@ -424,17 +411,6 @@
 
         stageEl.addEventListener('pointerup', endPointer);
         stageEl.addEventListener('pointercancel', endPointer);
-
-        stageEl.addEventListener('dblclick', function (e) {
-            var imgEl = stageEl.querySelector('img');
-            if (!imgEl) {
-                return;
-            }
-            zoomState.scale = zoomState.scale > 1 ? 1 : 2.5;
-            zoomState.x = 0;
-            zoomState.y = 0;
-            applyZoom(imgEl);
-        });
     })();
 
     function handleVideoZoneClick(side) {
