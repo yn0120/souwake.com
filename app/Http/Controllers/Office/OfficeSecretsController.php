@@ -37,7 +37,7 @@ class OfficeSecretsController extends Controller
 
         $query = SecretFileModel::where('status', 'ready')->orderByRaw("CAST(REGEXP_SUBSTR(original_name, '^[0-9]+') AS UNSIGNED) ASC");
         if ($beforeName !== '') {
-            $query->whereRaw("REGEXP_SUBSTR(original_name, '^[0-9]+') > ?", $beforeName);
+            $query->whereRaw("CAST(REGEXP_SUBSTR(original_name, '^[0-9]+') AS UNSIGNED) > ?", [(int) $beforeName]);
         }
 
         $records = $query->limit(self::PAGE_SIZE + 1)->get(['id', 'original_name', 'mime_type', 'created_at']);
