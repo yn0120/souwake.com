@@ -4,7 +4,7 @@ namespace App\Http\Requests\Office\PasswordManager;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EntryUpdateRequest extends FormRequest
+class EntryEditRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

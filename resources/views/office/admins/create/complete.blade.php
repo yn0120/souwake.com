@@ -37,7 +37,7 @@
                                             <div class="text-break w-100">管理者を登録しました。</div>
                                         </p>
                                     </div>
-                                    @if (in_array('officeAdminIndex', Auth::user()->routes()))
+                                    @if (in_array('officeAdminIndex*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeAdminIndex', session('officeAdminIndexSearchParams')) }}" class="btn btn-primary">管理者一覧</a>
                                         </div>

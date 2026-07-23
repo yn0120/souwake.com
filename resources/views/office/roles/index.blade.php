@@ -71,7 +71,7 @@
                                                                 {!! nl2br(e($record->note)) !!}
                                                             </td>
                                                             <td class="text-center py-2">
-                                                                @if (in_array('officeRoleShow', Auth::user()->routes()))
+                                                                @if (in_array('officeRoleShow*', Auth::user()->routes()))
                                                                     <a href="{{ route('officeRoleShow', ['id' => $record->id]) }}" class="btn btn-sm btn-icon btn-outline-info me-2" title="詳細">
                                                                         <i class="bx bx-xs bx-info-square"></i>
                                                                     </a>
@@ -87,7 +87,7 @@
                                                                         <button type="submit" class="btn btn-sm btn-icon btn-outline-danger me-2" title="削除"><i class="bx bx-xs bxs-trash-alt"></i></button>
                                                                     </form>
                                                                 @endif
-                                                                @if (in_array('officeMemoIndex', Auth::user()->routes()))
+                                                                @if (in_array('officeMemoIndex*', Auth::user()->routes()))
                                                                     @php
                                                                         $memoUrl = route('officeMemoIndex', ['segment' => 'roles', 'target_id' => $record->id]);
                                                                     @endphp

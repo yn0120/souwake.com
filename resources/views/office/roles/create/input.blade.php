@@ -71,7 +71,7 @@
                                             </div>
 
                                             {{-- 戻るボタン --}}
-                                            @if (in_array('officeRoleIndex', Auth::user()->routes()))
+                                            @if (in_array('officeRoleIndex*', Auth::user()->routes()))
                                                 <div class="my-3">
                                                     <a href="{{ route('officeRoleIndex', session('officeRolesIndexSearchParams')) }}" class="text-break btn btn-outline-dark col-12 mb-0">前のページに戻る</a>
                                                 </div>

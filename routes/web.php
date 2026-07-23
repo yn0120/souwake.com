@@ -26,40 +26,32 @@ use Illuminate\Support\Facades\Route;
 
 Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(function () {
     Route::middleware([RedirectIfAuthenticated::class.':office'])->group(function () {
-        // 管理者初期アカウント設定（入力）
+        // 管理者初期アカウント設定
         Route::get('/init/input', [OfficeAuthController::class, 'initInput'])->name('officeInitInput');
-        // 管理者初期アカウント設定（処理）
         Route::post('/init/complete', [OfficeAuthController::class, 'initExecute'])->name('officeInitExecute');
-        // 管理者初期アカウント設定（完了）
         Route::get('/init/complete', [OfficeAuthController::class, 'initComplete'])->name('officeInitComplete');
 
-        // 管理者パスワードを忘れたら（入力）
+        // 管理者パスワードを忘れたら
         Route::get('/forgot/pw/input', [OfficeAuthController::class, 'forgotPwInput'])->name('officeForgotPwInput');
-        // 管理者パスワードを忘れたら（処理）
         Route::post('/forgot/pw/complete', [OfficeAuthController::class, 'forgotPwExecute'])->name('officeForgotPwExecute');
-        // 管理者パスワードを忘れたら（完了）
         Route::get('/forgot/pw/complete', [OfficeAuthController::class, 'forgotPwComplete'])->name('officeForgotPwComplete');
 
-        // 管理者パスワード設定（入力）
-        Route::get('/set/pw/input', [OfficeAuthController::class, 'setPwInput'])->name('officeSetPwInput');
-        // 管理者パスワード設定（処理）
-        Route::post('/set/pw/complete', [OfficeAuthController::class, 'setPwExecute'])->name('officeSetPwExecute');
-        // 管理者パスワード設定（完了）
-        Route::get('/set/pw/complete', [OfficeAuthController::class, 'setPwComplete'])->name('officeSetPwComplete');
-
-        // 管理者ログイン（入力）
+        // 管理者ログイン
         Route::get('/login', [OfficeAuthController::class, 'loginInput'])->name('officeLoginInput');
-        // 管理者ログイン（処理）
         Route::post('/login', [OfficeAuthController::class, 'loginExecute'])->name('officeLoginExecute');
 
-        // 管理者ワンタイムキー（入力）
+        // 管理者ワンタイムキー
         Route::get('/onetime/input', [OfficeAuthController::class, 'onetimeInput'])->name('officeOnetimeInput');
-        // 管理者ワンタイムキー（処理）
         Route::post('/onetime/complete', [OfficeAuthController::class, 'onetimeExecute'])->name('officeOnetimeExecute');
     });
 
+    // 管理者パスワード設定
+    Route::get('/set/pw/input', [OfficeAuthController::class, 'setPwInput'])->name('officeSetPwInput');
+    Route::post('/set/pw/complete', [OfficeAuthController::class, 'setPwExecute'])->name('officeSetPwExecute');
+    Route::get('/set/pw/complete', [OfficeAuthController::class, 'setPwComplete'])->name('officeSetPwComplete');
+
     // 管理者ログアウト
-    Route::get('/logout', [OfficeAuthController::class, 'logout'])->name('officeLogout');
+    Route::get('/logout', [OfficeAuthController::class, 'logout'])->name('officeLogoutExecute');
 
     Route::middleware([RedirectIfNotAuthenticated::class.':office', RedirectIfNoUser::class.':office', TouchAdminActivity::class])->group(function () {
         Route::middleware([CheckRoutePermission::class])->group(function () {
@@ -72,22 +64,16 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
             // 権限詳細
             Route::get('/roles/{id}', [OfficeRolesController::class, 'show'])->name('officeRoleShow')->setDefaults(['description' => '権限詳細']);
 
-            // 権限登録（入力）
+            // 権限登録
             Route::get('/roles/create/input', [OfficeRolesController::class, 'createInput'])->name('officeRoleCreateInput')->setDefaults(['description' => '権限登録']);
-            // 権限登録（確認）
             Route::post('/roles/create/confirm', [OfficeRolesController::class, 'createConfirm'])->name('officeRoleCreateConfirm');
-            // 権限登録（処理）
             Route::post('/roles/create/complete', [OfficeRolesController::class, 'createExecute'])->name('officeRoleCreateExecute');
-            // 権限登録（完了）
             Route::get('/roles/create/complete', [OfficeRolesController::class, 'createComplete'])->name('officeRoleCreateComplete');
 
-            // 権限編集（入力）
+            // 権限編集
             Route::get('/roles/{id}/edit/input', [OfficeRolesController::class, 'editInput'])->name('officeRoleEditInput')->setDefaults(['description' => '権限編集']);
-            // 権限編集（確認）
             Route::post('/roles/{id}/edit/confirm', [OfficeRolesController::class, 'editConfirm'])->name('officeRoleEditConfirm');
-            // 権限編集（処理）
             Route::post('/roles/{id}/edit/complete', [OfficeRolesController::class, 'editExecute'])->name('officeRoleEditExecute');
-            // 権限編集（完了）
             Route::get('/roles/{id}/edit/complete', [OfficeRolesController::class, 'editComplete'])->name('officeRoleEditComplete');
 
             // 権限削除（処理）
@@ -105,22 +91,16 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
             // 管理者詳細
             Route::get('/admins/{id}', [OfficeAdminsController::class, 'show'])->name('officeAdminShow')->setDefaults(['description' => '管理者詳細']);
 
-            // 管理者登録（入力）
+            // 管理者登録
             Route::get('/admins/create/input', [OfficeAdminsController::class, 'createInput'])->name('officeAdminCreateInput')->setDefaults(['description' => '管理者登録']);
-            // 管理者登録（確認）
             Route::post('/admins/create/confirm', [OfficeAdminsController::class, 'createConfirm'])->name('officeAdminCreateConfirm');
-            // 管理者登録（処理）
             Route::post('/admins/create/complete', [OfficeAdminsController::class, 'createExecute'])->name('officeAdminCreateExecute');
-            // 管理者登録（完了）
             Route::get('/admins/create/complete', [OfficeAdminsController::class, 'createComplete'])->name('officeAdminCreateComplete');
 
-            // 管理者編集（入力）
+            // 管理者編集
             Route::get('/admins/{id}/edit/input', [OfficeAdminsController::class, 'editInput'])->name('officeAdminEditInput')->setDefaults(['description' => '管理者編集']);
-            // 管理者編集（確認）
             Route::post('/admins/{id}/edit/confirm', [OfficeAdminsController::class, 'editConfirm'])->name('officeAdminEditConfirm');
-            // 管理者編集（処理）
             Route::post('/admins/{id}/edit/complete', [OfficeAdminsController::class, 'editExecute'])->name('officeAdminEditExecute');
-            // 管理者編集（完了）
             Route::get('/admins/{id}/edit/complete', [OfficeAdminsController::class, 'editComplete'])->name('officeAdminEditComplete');
 
             // 管理者パスワード再通知（処理）
@@ -129,41 +109,46 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
             // 管理者削除（処理）
             Route::post('/admins/{id}/delete', [OfficeAdminsController::class, 'deleteExecute'])->name('officeAdminDeleteExecute')->setDefaults(['description' => '管理者削除']);
 
-            // パスワード管理（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-            // 一覧
-            Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex');
-            // 一覧（非同期検索・ソート）
-            Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerList');
-            // サイト登録（処理）
-            Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute');
-            // サイト更新（処理）
-            Route::post('/password-manager/{id}', [OfficePasswordManagerController::class, 'updateExecute'])->name('officePasswordManagerUpdateExecute');
-            // サイト削除（処理）
-            Route::post('/password-manager/{id}/delete', [OfficePasswordManagerController::class, 'deleteExecute'])->name('officePasswordManagerDeleteExecute');
-            // 項目追加（処理）
-            Route::post('/password-manager/{id}/items', [OfficePasswordManagerController::class, 'itemCreateExecute'])->name('officePasswordManagerItemCreateExecute');
-            // 項目更新（処理）
-            Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemUpdateExecute'])->name('officePasswordManagerItemUpdateExecute');
-            // 項目削除（処理）
-            Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute');
+            // パスワード管理一覧
+            Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex')->setDefaults(['description' => 'パスワード管理一覧']);
+            Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerIndexList');
 
-            // 家計簿（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-            // 入力フォーム
-            Route::get('/budget', [OfficeBudgetController::class, 'index'])->name('officeBudgetIndex');
-            // 登録（処理。スプレッドシートへ保存）
-            Route::post('/budget', [OfficeBudgetController::class, 'submitExecute'])->name('officeBudgetSubmitExecute');
-            // 口座の選択肢を追加（処理）
-            Route::post('/budget/accounts', [OfficeBudgetController::class, 'accountCreateExecute'])->name('officeBudgetAccountCreateExecute');
-            // 科目の選択肢を追加（処理）
-            Route::post('/budget/categories', [OfficeBudgetController::class, 'categoryCreateExecute'])->name('officeBudgetCategoryCreateExecute');
-            // スプレッドシートURLの設定（処理）
-            Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetUpdateExecute'])->name('officeBudgetSpreadsheetUpdateExecute');
+            // パスワード管理サイト登録（処理）
+            Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute')->setDefaults(['description' => 'パスワード管理 サイト登録']);
 
-            // プロフィール編集（管理者ごとにプライベートなデータのため、役割による権限制御(CheckRoutePermission)の対象外とする）
-            // 入力フォーム
-            Route::get('/profile', [OfficeProfileController::class, 'index'])->name('officeProfileIndex');
-            // 更新（処理）
-            Route::post('/profile', [OfficeProfileController::class, 'updateExecute'])->name('officeProfileUpdateExecute');
+            // パスワード管理サイト更新（処理）
+            Route::post('/password-manager/{id}', [OfficePasswordManagerController::class, 'editExecute'])->name('officePasswordManagerEditExecute')->setDefaults(['description' => 'パスワード管理 サイト編集']);
+
+            // パスワード管理サイト削除（処理）
+            Route::post('/password-manager/{id}/delete', [OfficePasswordManagerController::class, 'deleteExecute'])->name('officePasswordManagerDeleteExecute')->setDefaults(['description' => 'パスワード管理 サイト削除']);
+
+            // パスワード管理項目追加（処理）
+            Route::post('/password-manager/{id}/items', [OfficePasswordManagerController::class, 'itemCreateExecute'])->name('officePasswordManagerItemCreateExecute')->setDefaults(['description' => 'パスワード管理 項目登録']);
+
+            // パスワード管理項目更新（処理）
+            Route::post('/password-manager/{id}/items/{itemId}', [OfficePasswordManagerController::class, 'itemEditExecute'])->name('officePasswordManagerItemEditExecute')->setDefaults(['description' => 'パスワード管理 項目編集']);
+
+            // パスワード管理項目削除（処理）
+            Route::post('/password-manager/{id}/items/{itemId}/delete', [OfficePasswordManagerController::class, 'itemDeleteExecute'])->name('officePasswordManagerItemDeleteExecute')->setDefaults(['description' => 'パスワード管理 項目削除']);
+
+            // 家計簿入力
+            Route::get('/budget', [OfficeBudgetController::class, 'createInput'])->name('officeBudgetCreateInput')->setDefaults(['description' => '家計簿登録']);
+
+            // スプレッドシートへ登録処理
+            Route::post('/budget', [OfficeBudgetController::class, 'createExecute'])->name('officeBudgetCreateExecute')->setDefaults(['description' => 'スプレッドシートへ登録処理']);
+
+            // 口座選択肢追加処理
+            Route::post('/budget/accounts', [OfficeBudgetController::class, 'accountCreateExecute'])->name('officeBudgetAccountCreateExecute')->setDefaults(['description' => '口座選択肢追加処理']);
+
+            // 科目選択肢追加処理
+            Route::post('/budget/categories', [OfficeBudgetController::class, 'categoryCreateExecute'])->name('officeBudgetCategoryCreateExecute')->setDefaults(['description' => '科目選択肢追加処理']);
+
+            // スプレッドシートURL設定処理
+            Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetEditExecute'])->name('officeBudgetSpreadsheetEditExecute')->setDefaults(['description' => 'スプレッドシートURL設定処理']);
+
+            // プロフィール編集
+            Route::get('/profile', [OfficeProfileController::class, 'editInput'])->name('officeProfileEditInput')->setDefaults(['description' => 'プロフィール編集']);
+            Route::post('/profile', [OfficeProfileController::class, 'editExecute'])->name('officeProfileEditExecute');
         });
 
         // エラーページ

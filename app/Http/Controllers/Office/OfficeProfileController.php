@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Office;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Office\Profile\UpdateRequest;
+use App\Http\Requests\Office\Profile\EditRequest;
 use App\Libraries\Utils;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ class OfficeProfileController extends Controller
      *
      * @return View
      */
-    public function index(Request $request)
+    public function editInput(Request $request)
     {
         $admin = DB::table('admins')->where('id', Auth::id())->first(['name', 'email', 'google_service_account_email']);
 
@@ -27,7 +27,7 @@ class OfficeProfileController extends Controller
         $assign['email'] = $admin->email;
         $assign['serviceAccountEmail'] = $admin->google_service_account_email;
 
-        return view('office/profile/index', compact('assign'));
+        return view('office/profile/edit/input', compact('assign'));
     }
 
     /**
@@ -35,7 +35,7 @@ class OfficeProfileController extends Controller
      *
      * @return JsonResponse
      */
-    public function updateExecute(UpdateRequest $request)
+    public function editExecute(EditRequest $request)
     {
         $adminId = Auth::id();
         $input = $request->validated();

@@ -4,7 +4,7 @@ namespace App\Http\Requests\Office\Budget;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SpreadsheetUpdateRequest extends FormRequest
+class SpreadsheetEditRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

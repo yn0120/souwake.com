@@ -25,21 +25,24 @@ class CheckRoutePermission
 
         // CheckRoutePermissionミドルウェアを使っているすべてのRouteNameとdescriptionを取得
         $routePatterns = collect(Route::getRoutes())
-            ->filter(function ($route) {
-                return collect($route->middleware())->contains(function ($middleware) {
-                    return str_contains($middleware, CheckRoutePermission::class);
-                });
-            })
+            ->filter(fn ($route) => collect($route->middleware())->contains(fn ($m) => str_contains($m, CheckRoutePermission::class)))
             ->mapWithKeys(function ($route) {
-                $routeName = $route->getName();
-                $baseRouteName = preg_match('/(?:Input|Confirm|Execute|Complete)$/', $routeName) && isset($route->defaults['description'])
-                    ? preg_replace('/(?:Input|Confirm|Execute|Complete)$/', '*', $routeName) // 入力ページにアクセス可能な人は確認処理完了も操作可能なためパターンマッチはワイルドカードでまとめる
-                    : $routeName;
+                $name = $route->getName();
+                $desc = $route->defaults['description'] ?? null;
 
-                return [$baseRouteName => $route->defaults['description'] ?? null];
+                // トップページは全員アクセス可能
+                if (!$name || !$desc || $name === 'officeTop') {
+                    return [];
+                }
+
+                // パターンに変換（Input/Confirm/Execute/Completeはワイルドカードに置換）
+                $pattern = preg_replace(
+                    ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/Show$/'],
+                    ['*', 'Index*', 'Show*'],
+                $name);
+
+                return [$pattern => $desc];
             })
-            ->filter() // null, false, '' などのfalsyな値を除外（routeNameを定義していないルートを除外）
-            ->filter(fn ($_, $key) => $key && $key !== 'officeTop') // トップページは全員アクセス可能なため除外
             ->toArray();
 
         // DBに登録されているRouteNameを取得
@@ -87,11 +90,17 @@ class CheckRoutePermission
 
         // 処理するRouteNameのIDを取得
         $currentRouteName = Route::currentRouteName();
-        if ($currentRouteName == 'officeTop') {
+        if ($currentRouteName === 'officeTop') {
             return $next($request);
         }
 
-        $currentRoutePattern = preg_replace('/(?:Input|Confirm|Execute|Complete)$/', '*', $currentRouteName);
+        // 現在のルート名をパターンに変換（Input/Confirm/Execute/Completeはワイルドカードに置換）
+        $currentRoutePattern = preg_replace(
+            ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/Show$/'],
+            ['*', 'Index*', 'Show*'],
+            $currentRouteName,
+        );
+
         $routeId = array_search($currentRoutePattern, $routeNames);
 
         // 操作権限をチェック

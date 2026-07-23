@@ -37,12 +37,12 @@
                                             <div class="text-break w-100">管理者を編集しました。</div>
                                         </p>
                                     </div>
-                                    @if (in_array('officeAdminIndex', Auth::user()->routes()))
+                                    @if (in_array('officeAdminIndex*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeAdminIndex', session('officeAdminIndexSearchParams')) }}" class="btn btn-primary">管理者一覧</a>
                                         </div>
                                     @endif
-                                    @if (in_array('officeAdminShow', Auth::user()->routes()))
+                                    @if (in_array('officeAdminShow*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeAdminShow', ['id' => $assign['id']]) }}" class="btn btn-primary">管理者詳細</a>
                                         </div>

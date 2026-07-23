@@ -37,7 +37,7 @@
                                             <div class="text-break w-100">権限を登録しました。</div>
                                         </p>
                                     </div>
-                                    @if (in_array('officeRoleIndex', Auth::user()->routes()))
+                                    @if (in_array('officeRoleIndex*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeRoleIndex', session('officeRolesIndexSearchParams'), false) }}" class="btn btn-primary">権限一覧</a>
                                         </div>

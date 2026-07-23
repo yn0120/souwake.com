@@ -28,10 +28,13 @@ class GoogleSheetsBudgetService
         // シート名が不明でも書き込めるよう、先頭シートのタイトルを取得する
         $sheetTitle = $service->spreadsheets->get($spreadsheetId)->getSheets()[0]->getProperties()->getTitle();
 
+        $valueRange = new ValueRange();
+        $valueRange->setValues([$row]);
+
         $service->spreadsheets_values->append(
             $spreadsheetId,
             "'{$sheetTitle}'!A:E",
-            new ValueRange(['values' => [$row]]),
+            $valueRange,
             ['valueInputOption' => 'USER_ENTERED']
         );
     }

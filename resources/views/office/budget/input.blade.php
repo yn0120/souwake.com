@@ -26,23 +26,21 @@
                             </div>
 
                             {{-- スプレッドシートURL設定 --}}
-                            @if (! $assign['spreadsheetUrl'])
-                                <div class="card p-4 mb-4">
-                                    <h6 class="card-title">保存先スプレッドシート</h6>
-                                    <form id="bdg-spreadsheet-form">
-                                        <div class="row">
-                                            <div class="col-12 col-md-8 pt-2">
-                                                <label class="form-label" for="bdg-spreadsheet-url">スプレッドシートURL</label>
-                                                <input type="url" id="bdg-spreadsheet-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." value="{{ $assign['spreadsheetUrl'] }}">
-                                            </div>
-                                            <div class="col-12 col-md-4 pt-2 d-flex align-items-end">
-                                                <button type="submit" class="btn btn-outline-primary">URLを保存</button>
-                                            </div>
+                            <div class="card p-4 mb-4 {{ $assign['spreadsheetUrl'] ? 'd-none' : '' }}">
+                                <h6 class="card-title">保存先スプレッドシート</h6>
+                                <form id="bdg-spreadsheet-form">
+                                    <div class="row">
+                                        <div class="col-12 col-md-8 pt-2">
+                                            <label class="form-label" for="bdg-spreadsheet-url">スプレッドシートURL</label>
+                                            <input type="url" id="bdg-spreadsheet-url" class="form-control" placeholder="https://docs.google.com/spreadsheets/d/..." value="{{ $assign['spreadsheetUrl'] }}">
                                         </div>
-                                        <div class="text-muted small mt-2">※ このスプレッドシートを、サービスアカウントのメールアドレスに編集者権限で共有しておく必要があります。</div>
-                                    </form>
-                                </div>
-                            @endif
+                                        <div class="col-12 col-md-4 pt-2 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-outline-primary">URLを保存</button>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-2">※ このスプレッドシートを、サービスアカウントのメールアドレスに編集者権限で共有しておく必要があります。</div>
+                                </form>
+                            </div>
 
                             {{-- 入力フォーム --}}
                             <div class="card p-5">
@@ -51,7 +49,7 @@
                                     <div class="row">
                                         <div class="col-12 col-md-3 pt-2">
                                             <label class="form-label" for="bdg-occurred-on">発生日</label>
-                                            <input type="tel" id="bdg-occurred-on" name="occurred_on" class="form-control" maxlength="8" inputmode="numeric" required>
+                                            <input type="tel" name="occurred_on" id="bdg-occurred-on" class="form-control" maxlength="8" inputmode="numeric" required>
                                         </div>
                                         <div class="col-12 col-md-3 pt-2">
                                             <label class="form-label" for="bdg-amount">金額</label>
@@ -102,10 +100,10 @@
 @push ('js')
     <script>
         window.budgetConfig = {
-            submitUrl: @json(route('officeBudgetSubmitExecute', [], false)),
+            submitUrl: @json(route('officeBudgetCreateExecute', [], false)),
             accountCreateUrl: @json(route('officeBudgetAccountCreateExecute', [], false)),
             categoryCreateUrl: @json(route('officeBudgetCategoryCreateExecute', [], false)),
-            spreadsheetUpdateUrl: @json(route('officeBudgetSpreadsheetUpdateExecute', [], false)),
+            spreadsheetUpdateUrl: @json(route('officeBudgetSpreadsheetEditExecute', [], false)),
             defaultAccountId: @json($assign['defaultAccountId']),
             defaultCategoryId: @json($assign['defaultCategoryId']),
             today: @json($assign['today']),

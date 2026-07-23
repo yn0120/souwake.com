@@ -93,7 +93,7 @@
 @push ('js')
     <script>
         window.profileConfig = {
-            updateUrl: @json(route('officeProfileUpdateExecute', [], false)),
+            updateUrl: @json(route('officeProfileEditExecute', [], false)),
             csrfToken: @json(csrf_token()),
         };
     </script>

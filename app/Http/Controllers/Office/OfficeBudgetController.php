@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Office\Budget\AccountCreateRequest;
 use App\Http\Requests\Office\Budget\CategoryCreateRequest;
 use App\Http\Requests\Office\Budget\EntryCreateRequest;
-use App\Http\Requests\Office\Budget\SpreadsheetUpdateRequest;
+use App\Http\Requests\Office\Budget\SpreadsheetEditRequest;
 use App\Libraries\Utils;
 use App\Services\GoogleSheetsBudgetService;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +36,7 @@ class OfficeBudgetController extends Controller
      *
      * @return View
      */
-    public function index(Request $request)
+    public function createInput(Request $request)
     {
         $adminId = Auth::id();
 
@@ -53,7 +53,7 @@ class OfficeBudgetController extends Controller
         $assign['spreadsheetUrl'] = DB::table('admins')->where('id', $adminId)->value('budget_spreadsheet_url');
         $assign['today'] = now()->format('Ymd');
 
-        return view('office/budget/index', compact('assign'));
+        return view('office/budget/input', compact('assign'));
     }
 
     /**
@@ -81,7 +81,7 @@ class OfficeBudgetController extends Controller
      *
      * @return JsonResponse
      */
-    public function spreadsheetUpdateExecute(SpreadsheetUpdateRequest $request)
+    public function spreadsheetEditExecute(SpreadsheetEditRequest $request)
     {
         try {
             DB::table('admins')->where('id', Auth::id())->update([
@@ -101,7 +101,7 @@ class OfficeBudgetController extends Controller
      *
      * @return JsonResponse
      */
-    public function submitExecute(EntryCreateRequest $request)
+    public function createExecute(EntryCreateRequest $request)
     {
         $adminId = Auth::id();
         $input = $request->validated();

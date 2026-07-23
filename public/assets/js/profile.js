@@ -38,12 +38,14 @@
                 'Accept': 'application/json',
             },
             body: formData,
-        }).then(function (res) {
-            return res.json().catch(function () {
-                return {};
-            }).then(function (data) {
-                return {ok: res.ok, data: data};
-            });
+        }).then(async function (res) {
+            let data;
+            try {
+                data = await res.json();
+            } catch {
+                data = {};
+            }
+            return { ok: res.ok, data: data };
         }).then(function (result) {
             if (!result.ok) {
                 showAlert('danger', (result.data && result.data.message) || '保存に失敗しました。');

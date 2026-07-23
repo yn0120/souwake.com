@@ -93,7 +93,7 @@
                                             </div>
 
                                             {{-- 戻るボタン --}}
-                                            @if (in_array('officeAdminIndex', Auth::user()->routes()))
+                                            @if (in_array('officeAdminIndex*', Auth::user()->routes()))
                                                 <div class="my-3">
                                                     <a href="{{ route('officeAdminIndex', session('officeAdminIndexSearchParams')) }}" class="text-break btn btn-outline-dark col-12 mb-0">前のページに戻る</a>
                                                 </div>

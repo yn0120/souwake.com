@@ -27,13 +27,13 @@
                             @include ('office/parts/item/alert')
                             <div class="card p-5">
                                 <div class="col-12 pb-2 text-end">
-                                    @if (in_array('officeAdminIndex', Auth::user()->routes()))
+                                    @if (in_array('officeAdminIndex*', Auth::user()->routes()))
                                         <a href="{{ route('officeAdminIndex', session('officeAdminIndexSearchParams')) }}" class="btn btn-outline-dark">戻る</a>
                                     @endif
                                     @if (in_array('officeAdminEdit*', Auth::user()->routes()) && $assign['record']->activated_at)
                                         <a href="{{ route('officeAdminEditInput', ['id' => $assign['record']->id]) }}" class="btn btn-warning">編集</a>
                                     @endif
-                                    @if (in_array('officeMemoIndex', Auth::user()->routes()))
+                                    @if (in_array('officeMemoIndex*', Auth::user()->routes()))
                                         @php
                                             $memoUrl = route('officeMemoIndex', ['segment' => 'admins', 'target_id' => $assign['record']->id]);
                                         @endphp

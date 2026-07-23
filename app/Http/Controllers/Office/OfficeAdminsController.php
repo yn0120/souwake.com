@@ -531,7 +531,7 @@ class OfficeAdminsController extends Controller
 
         // ログイン中の管理者を削除した場合はログアウト
         if ($id === Auth::id()) {
-            return redirect()->route('officeLogout');
+            return redirect()->route('officeLogoutExecute');
         }
 
         return redirect()->route('officeAdminIndex', session('officeAdminIndexSearchParams'))->with('success', '削除しました。');

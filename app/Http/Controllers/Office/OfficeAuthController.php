@@ -195,6 +195,9 @@ class OfficeAuthController extends Controller
      */
     public function setPwInput(Request $request)
     {
+        Auth::logout();
+        $request->session()->flush();
+
         if (! $request->expires || ! $request->token || ! $request->signature) {
             return redirect()->route('officeForgotPwInput')->with('error', '無効なURLです。');
         }
@@ -498,7 +501,7 @@ class OfficeAuthController extends Controller
 
         // admins.id = 1 のユーザーはログイン後に家計簿ページへ遷移する
         if ((int) $admin->id === 1) {
-            return redirect()->route('officeBudgetIndex');
+            return redirect()->route('officeBudgetCreateInput');
         }
 
         return redirect()->route('officeTop');
@@ -516,7 +519,6 @@ class OfficeAuthController extends Controller
             DB::table('admins')->where('id', Auth::id())->update(['last_activity_at' => Carbon::now()]);
         }
 
-        Auth::logout();
         Auth::logout();
         $request->session()->flush();
 

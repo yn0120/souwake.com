@@ -37,12 +37,12 @@
                                             <div class="text-break w-100">権限を編集しました。</div>
                                         </p>
                                     </div>
-                                    @if (in_array('officeRoleIndex', Auth::user()->routes()))
+                                    @if (in_array('officeRoleIndex*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeRoleIndex', session('officeRolesIndexSearchParams')) }}" class="btn btn-primary">権限一覧</a>
                                         </div>
                                     @endif
-                                    @if (in_array('officeRoleShow', Auth::user()->routes()))
+                                    @if (in_array('officeRoleShow*', Auth::user()->routes()))
                                         <div class="col-auto pb-2">
                                             <a href="{{ route('officeRoleShow', ['id' => $assign['id']]) }}" class="btn btn-primary">権限詳細</a>
                                         </div>

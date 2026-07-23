@@ -67,7 +67,7 @@
                     <i class="menu-icon tf-icons bx bx-shield"></i> 権限管理
                 </a>
                 <ul class="menu-sub">
-                    @if (in_array('officeRoleIndex', Auth::user()->routes()))
+                    @if (in_array('officeRoleIndex*', Auth::user()->routes()))
                         <li class="menu-item {{ request()->route()->named('officeRoleIndex') ? 'active' : '' }}">
                             <a href="{{ route('officeRoleIndex', [], false) }}" class="menu-link">
                                 一覧
@@ -98,7 +98,7 @@
                     <i class="menu-icon tf-icons bx bx-user"></i> 管理者管理
                 </a>
                 <ul class="menu-sub">
-                    @if (in_array('officeAdminIndex', Auth::user()->routes()))
+                    @if (in_array('officeAdminIndex*', Auth::user()->routes()))
                         <li class="menu-item {{ request()->route()->named('officeAdminIndex') ? 'active' : '' }}">
                             <a href="{{ route('officeAdminIndex', [], false) }}" class="menu-link">
                                 一覧
@@ -115,24 +115,27 @@
                 </ul>
             </li>
         @endif
-        {{-- パスワード管理（管理者ごとの個人データのため権限判定なしで常時表示） --}}
-        <li class="menu-item {{ request()->route()->named('*officePasswordManager*') ? 'active' : '' }}">
-            <a href="{{ route('officePasswordManagerIndex', [], false) }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-key"></i> パスワード管理
-            </a>
-        </li>
-        {{-- 家計簿（管理者ごとの個人データのため権限判定なしで常時表示） --}}
-        <li class="menu-item {{ request()->route()->named('*officeBudget*') ? 'active' : '' }}">
-            <a href="{{ route('officeBudgetIndex', [], false) }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-wallet"></i> 家計簿
-            </a>
-        </li>
-        {{-- プロフィール編集（管理者ごとの個人データのため権限判定なしで常時表示） --}}
-        <li class="menu-item {{ request()->route()->named('*officeProfile*') ? 'active' : '' }}">
-            <a href="{{ route('officeProfileIndex', [], false) }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-user-circle"></i> プロフィール編集
-            </a>
-        </li>
+        @if (preg_grep('/^officePasswordManager.*$/', Auth::user()->routes()))
+            <li class="menu-item {{ request()->route()->named('*officePasswordManager*') ? 'active' : '' }}">
+                <a href="{{ route('officePasswordManagerIndex', [], false) }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-key"></i> パスワード管理
+                </a>
+            </li>
+        @endif
+        @if (preg_grep('/^officeBudget.*$/', Auth::user()->routes()))
+            <li class="menu-item {{ request()->route()->named('*officeBudget*') ? 'active' : '' }}">
+                <a href="{{ route('officeBudgetCreateInput', [], false) }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-wallet"></i> 家計簿
+                </a>
+            </li>
+        @endif
+        @if (preg_grep('/^officeProfile.*$/', Auth::user()->routes()))
+            <li class="menu-item {{ request()->route()->named('*officeProfile*') ? 'active' : '' }}">
+                <a href="{{ route('officeProfileEditInput', [], false) }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user-circle"></i> プロフィール編集
+                </a>
+            </li>
+        @endif
         <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
             <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
         </div>

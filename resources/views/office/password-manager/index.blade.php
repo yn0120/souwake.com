@@ -127,12 +127,12 @@
     <script src="/assets/vendor/libs/clipboard/clipboard.js"></script>
     <script>
         @php
-            $pwmListUrl = route('officePasswordManagerList', [], false);
+            $pwmListUrl = route('officePasswordManagerIndexList', [], false);
             $pwmCreateUrl = route('officePasswordManagerCreateExecute', [], false);
-            $pwmUpdateUrlBase = route('officePasswordManagerUpdateExecute', ['id' => '__ID__'], false);
+            $pwmUpdateUrlBase = route('officePasswordManagerEditExecute', ['id' => '__ID__'], false);
             $pwmDeleteUrlBase = route('officePasswordManagerDeleteExecute', ['id' => '__ID__'], false);
             $pwmItemCreateUrlBase = route('officePasswordManagerItemCreateExecute', ['id' => '__ID__'], false);
-            $pwmItemUpdateUrlBase = route('officePasswordManagerItemUpdateExecute', ['id' => '__ID__', 'itemId' => '__ITEM_ID__'], false);
+            $pwmItemUpdateUrlBase = route('officePasswordManagerItemEditExecute', ['id' => '__ID__', 'itemId' => '__ITEM_ID__'], false);
             $pwmItemDeleteUrlBase = route('officePasswordManagerItemDeleteExecute', ['id' => '__ID__', 'itemId' => '__ITEM_ID__'], false);
         @endphp
         window.passwordManagerConfig = {

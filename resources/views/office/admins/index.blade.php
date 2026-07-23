@@ -190,7 +190,7 @@
                                                                 @endif
                                                             </td>
                                                             <td class="text-center py-2">
-                                                                @if (in_array('officeAdminShow', Auth::user()->routes()))
+                                                                @if (in_array('officeAdminShow*', Auth::user()->routes()))
                                                                     <a href="{{ route('officeAdminShow', ['id' => $record->id]) }}" class="btn btn-sm btn-icon btn-outline-info me-2" title="詳細">
                                                                         <i class="bx bx-xs bx-info-square"></i>
                                                                     </a>
@@ -212,7 +212,7 @@
                                                                         <button type="submit" class="btn btn-sm btn-icon btn-outline-danger me-2" title="削除"><i class="bx bx-xs bxs-trash-alt"></i></button>
                                                                     </form>
                                                                 @endif
-                                                                @if (in_array('officeMemoIndex', Auth::user()->routes()))
+                                                                @if (in_array('officeMemoIndex*', Auth::user()->routes()))
                                                                     @php
                                                                         $memoUrl = route('officeMemoIndex', ['segment' => 'admins', 'target_id' => $record->id]);
                                                                     @endphp

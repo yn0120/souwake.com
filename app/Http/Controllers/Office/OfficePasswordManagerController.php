@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Office;
 use App\Enums\PasswordItemType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Office\PasswordManager\EntryCreateRequest;
-use App\Http\Requests\Office\PasswordManager\EntryUpdateRequest;
+use App\Http\Requests\Office\PasswordManager\EntryEditRequest;
 use App\Http\Requests\Office\PasswordManager\ItemRequest;
 use App\Libraries\Utils;
 use Illuminate\Database\QueryException;
@@ -163,7 +163,7 @@ class OfficePasswordManagerController extends Controller
      *
      * @return JsonResponse
      */
-    public function updateExecute(EntryUpdateRequest $request, $id)
+    public function editExecute(EntryEditRequest $request, $id)
     {
         $entry = $this->findOwnedEntry($id);
         if (! $entry) {
@@ -264,7 +264,7 @@ class OfficePasswordManagerController extends Controller
      *
      * @return JsonResponse
      */
-    public function itemUpdateExecute(ItemRequest $request, $id, $itemId)
+    public function itemEditExecute(ItemRequest $request, $id, $itemId)
     {
         $entry = $this->findOwnedEntry($id);
         if (! $entry) {
