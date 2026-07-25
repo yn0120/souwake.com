@@ -37,8 +37,8 @@ class CheckRoutePermission
 
                 // パターンに変換（Input/Confirm/Execute/Completeはワイルドカードに置換）
                 $pattern = preg_replace(
-                    ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/Show$/'],
-                    ['*', 'Index*', 'Show*'],
+                    ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/List$/', '/Show$/'],
+                    ['*', 'Index*', 'List*', 'Show*'],
                 $name);
 
                 return [$pattern => $desc];
@@ -96,8 +96,8 @@ class CheckRoutePermission
 
         // 現在のルート名をパターンに変換（Input/Confirm/Execute/Completeはワイルドカードに置換）
         $currentRoutePattern = preg_replace(
-            ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/Show$/'],
-            ['*', 'Index*', 'Show*'],
+            ['/(?:Input|Confirm|Execute|Complete)$/', '/Index$/', '/List$/', '/Show$/'],
+            ['*', 'Index*', 'List*', 'Show*'],
             $currentRouteName,
         );
 

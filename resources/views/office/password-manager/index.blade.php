@@ -127,7 +127,7 @@
     <script src="/assets/vendor/libs/clipboard/clipboard.js"></script>
     <script>
         @php
-            $pwmListUrl = route('officePasswordManagerIndexList', [], false);
+            $pwmListUrl = route('officePasswordManagerList', [], false);
             $pwmCreateUrl = route('officePasswordManagerCreateExecute', [], false);
             $pwmUpdateUrlBase = route('officePasswordManagerEditExecute', ['id' => '__ID__'], false);
             $pwmDeleteUrlBase = route('officePasswordManagerDeleteExecute', ['id' => '__ID__'], false);
