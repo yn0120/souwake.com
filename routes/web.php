@@ -111,7 +111,7 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
             // パスワード管理一覧
             Route::get('/password-manager', [OfficePasswordManagerController::class, 'index'])->name('officePasswordManagerIndex')->setDefaults(['description' => 'パスワード管理一覧']);
-            Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerIndexList');
+            Route::get('/password-manager/list', [OfficePasswordManagerController::class, 'list'])->name('officePasswordManagerIndexList')->setDefaults(['description' => 'パスワード管理一覧']);
 
             // パスワード管理サイト登録（処理）
             Route::post('/password-manager', [OfficePasswordManagerController::class, 'createExecute'])->name('officePasswordManagerCreateExecute')->setDefaults(['description' => 'パスワード管理 サイト登録']);
