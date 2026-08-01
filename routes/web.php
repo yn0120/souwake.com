@@ -11,6 +11,7 @@ use App\Http\Controllers\Office\OfficeSecretsController;
 use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
+use App\Http\Controllers\Wedding\WeddingRsvpController;
 use App\Http\Middleware\Office\CheckRoutePermission;
 use App\Http\Middleware\Secrets\EnsureSecretsAdmin;
 use App\Http\Middleware\Secrets\NoStoreCache;
@@ -158,9 +159,9 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
 // 結婚式サイト（wedding.souwake.com）
 Route::domain(config('app.env_domain').'wedding.'.config('app.domain'))->group(function () {
-    Route::get('/', function () {
-        echo 'メンテナンス中です。';
-    });
+    Route::get('/', [WeddingRsvpController::class, 'index'])->name('weddingRsvpInput');
+    Route::post('/rsvp', [WeddingRsvpController::class, 'createExecute'])->name('weddingRsvpCreateExecute');
+    Route::get('/rsvp/complete', [WeddingRsvpController::class, 'complete'])->name('weddingRsvpComplete');
 });
 
 // ファイル管理機能（office.souwake.com）

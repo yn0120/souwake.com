@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'wedding' => [
+        'admin_email' => env('WEDDING_ADMIN_EMAIL'),
+        'rsvp_deadline' => env('WEDDING_RSVP_DEADLINE', '2026年10月4日（日）'),
+    ],
+
 ];
