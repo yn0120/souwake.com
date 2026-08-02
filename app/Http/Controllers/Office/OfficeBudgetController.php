@@ -48,8 +48,8 @@ class OfficeBudgetController extends Controller
 
         $assign['accounts'] = $accounts;
         $assign['categories'] = $categories;
-        $assign['defaultAccountId'] = $this->findIdByName($accounts, self::DEFAULT_ACCOUNTS[0]);
-        $assign['defaultCategoryId'] = $this->findIdByName($categories, self::DEFAULT_CATEGORIES[0]);
+        $assign['defaultAccountId'] = $accounts[0]['id'] ?? null;
+        $assign['defaultCategoryId'] = $categories[0]['id'] ?? null;
         $assign['spreadsheetUrl'] = DB::table('admins')->where('id', $adminId)->value('budget_spreadsheet_url');
         $assign['today'] = now()->format('Ymd');
 
@@ -178,24 +178,6 @@ class OfficeBudgetController extends Controller
             ->map(fn ($row) => ['id' => $row->id, 'name' => $row->name])
             ->values()
             ->all();
-    }
-
-    /**
-     * 選択肢一覧から名称に一致するIDを取得（無ければ先頭のIDを返す）
-     *
-     * @param  array  $options
-     * @param  string  $name
-     * @return int|null
-     */
-    private function findIdByName(array $options, $name)
-    {
-        foreach ($options as $option) {
-            if ($option['name'] === $name) {
-                return $option['id'];
-            }
-        }
-
-        return $options[0]['id'] ?? null;
     }
 
     /**
