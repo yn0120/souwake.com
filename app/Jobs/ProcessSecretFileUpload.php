@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Libraries\Utils;
 use App\Models\SecretFileModel;
+use App\Models\SecretVaultKeyModel;
 use App\Services\SecretFileCryptoService;
 use App\Services\SecureDeleteService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -229,9 +230,15 @@ class ProcessSecretFileUpload implements ShouldQueue
 
     /**
      * 圧縮済みファイルをチャンク単位AES-256-GCMで暗号化し、/var/encrypted（secretsディスク）へ書き込む。
+     * ファイル鍵はvaultの公開鍵でラップするため、暗号化した本人（サーバー）も以降は復号できない。
      */
     private static function encryptToStorage(SecretFileModel $file, string $compressedPath, string $mimeType): void
     {
+        $vaultPublicKey = SecretVaultKeyModel::publicKeyRaw();
+        if ($vaultPublicKey === null) {
+            throw new \RuntimeException('vault鍵が未登録のため暗号化できません。office.souwake.com の /secrets/vault で認証器を登録してください。');
+        }
+
         $fileKey = SecretFileCryptoService::generateFileKey();
         $nonceBase = SecretFileCryptoService::generateContentNonceBase();
         $chunkSize = SecretFileCryptoService::chunkSize();
@@ -265,13 +272,14 @@ class ProcessSecretFileUpload implements ShouldQueue
             fclose($out);
         }
 
-        $wrapped = SecretFileCryptoService::wrapFileKey($fileKey);
+        $wrapped = SecretFileCryptoService::wrapFileKeyForVault($vaultPublicKey, $fileKey);
 
         $file->mime_type = $mimeType;
         $file->size_bytes = $plainSize;
-        $file->wrapped_key = base64_encode($wrapped['wrapped_key']);
-        $file->key_wrap_nonce = base64_encode($wrapped['nonce']);
-        $file->key_wrap_tag = base64_encode($wrapped['tag']);
+        $file->eph_public_key = base64_encode($wrapped['eph_public_key']);
+        $file->vault_wrapped_key = base64_encode($wrapped['wrapped_key']);
+        $file->vault_wrap_nonce = base64_encode($wrapped['nonce']);
+        $file->vault_wrap_tag = base64_encode($wrapped['tag']);
         $file->content_nonce_base = base64_encode($nonceBase);
         $file->save();
     }

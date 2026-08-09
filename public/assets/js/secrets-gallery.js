@@ -24,6 +24,11 @@
     var stageEl = document.getElementById('secrets-modal-stage');
     var closeBtn = document.getElementById('secrets-modal-close');
 
+    // このURLはサーバーには到達しない。Service Worker（secrets-sw.js）が横取りし、
+    // /secrets/meta/{id} と /secrets/raw/{id} から暗号文を取ってブラウザ内で復号したうえで、
+    // 平文座標の200/206レスポンスを組み立てて返す。
+    // <img>/<video> から見れば通常のRange対応URLと区別がつかないため、
+    // Plyrのシークや事前読み込みのロジックはE2E化前と同じまま動く。
     function viewUrl(id) {
         return config.viewUrlBase.replace('__ID__', id);
     }
@@ -88,20 +93,32 @@
             });
     }
 
-    appendRecords(config.initialRecords || []);
-    if (files.length === 0 && !hasMore) {
-        emptyEl.style.display = '';
-    }
-    sentinelEl.style.display = hasMore ? '' : 'none';
+    // ギャラリーの起動は secrets-boot.js がvaultのアンロックを終えてから呼ぶ。
+    // アンロック前に描画を始めると、Service Workerがまだ鍵を持っておらず
+    // 事前読み込みが全部401になってしまうため。
+    var started = false;
 
-    if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function (entries) {
-            if (entries[0].isIntersecting) {
-                loadMore();
-            }
-        });
-        observer.observe(sentinelEl);
-    }
+    window.startSecretsGallery = function () {
+        if (started) {
+            return;
+        }
+        started = true;
+
+        appendRecords(config.initialRecords || []);
+        if (files.length === 0 && !hasMore) {
+            emptyEl.style.display = '';
+        }
+        sentinelEl.style.display = hasMore ? '' : 'none';
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function (entries) {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            });
+            observer.observe(sentinelEl);
+        }
+    };
 
     // --- 事前読み込み（前後10件）---
 

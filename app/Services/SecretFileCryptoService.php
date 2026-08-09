@@ -7,19 +7,38 @@ use RuntimeException;
 /**
  * ファイル機能の封筒暗号化（envelope encryption）を担うサービス。
  *
- * - ファイルごとにランダムなファイル鍵を生成し、マスターキー（SECRETS_MASTER_KEY）でラップして保管する。
+ * - ファイルごとにランダムなファイル鍵を生成し、**vaultの公開鍵**でラップして保管する。
+ *   ラップにはP-256のECDH-ES（一時鍵ペアを生成 → vault公開鍵とECDH → HKDF-SHA256 →
+ *   AES-256-GCM）を使う。サーバーはvaultの公開鍵しか持たないため「ラップはできるが
+ *   アンラップはできない」状態になり、平文がoriginからもCloudflareのエッジからも出ない
+ *   （E2E暗号化）。アンラップできるのは、vault秘密鍵をWebAuthn PRF等で復号したブラウザだけ。
  * - 本文はチャンク単位（chunk_size）のAES-256-GCMで独立に暗号化・認証する（chunked AEAD）。
  *   HTTP Rangeリクエスト（動画のシーク等）でチャンク単位のランダムアクセス復号ができるようにするためで、
  *   AAD（関連データ）にファイルUUID・チャンクindex・最終チャンクフラグを含めることで
  *   チャンクの差し替え・順序入替・末尾切り詰めも検知できる。
- * - 抹消（crypto-shred）は、このサービスを介さずDB側のwrapped_key等の行を削除するだけで、
+ *   **このチャンク形式はブラウザのWebCryptoがそのまま復号できる形になっている**
+ *   （AES-GCM / 12byteノンス / タグ末尾連結 / additionalData）。E2E化にあたって
+ *   ディスク上の暗号文は一切作り変えていない。
+ * - 抹消（crypto-shred）は、このサービスを介さずDB側のラップ済み鍵の行を削除するだけで、
  *   本文の暗号文がディスク上に残っていても計算量的に復元不能になる。
+ *
+ * 旧方式との違い: 以前は SECRETS_MASTER_KEY でラップし、PHP側で復号してストリーミング配信していた。
+ * その方式では .env とディスクを取られた時点で復号でき、さらにCloudflareのエッジを平文が通っていた。
  */
 class SecretFileCryptoService
 {
     private const KEY_LEN = 32;   // AES-256
     private const NONCE_LEN = 12; // GCM推奨の96bit
     private const TAG_LEN = 16;
+
+    /** vault鍵ペアの曲線。WebCryptoが名前付き曲線として標準対応しているP-256を使う */
+    private const EC_CURVE = 'prime256v1';
+
+    /**
+     * HKDFのinfo。ブラウザ側（secrets-sw.js）と完全に一致させること。
+     * 用途ごとに異なる文字列にして、同じ共有秘密から導出した鍵が他の用途に流用されないようにする。
+     */
+    private const HKDF_INFO_FILE_KEY = 'souwake-secrets-file-key-v1';
 
     /**
      * ランダムなファイル鍵を生成する
@@ -54,18 +73,56 @@ class SecretFileCryptoService
     }
 
     /**
-     * マスターキーでファイル鍵をラップ（AES-256-GCM）する
+     * vaultの公開鍵でファイル鍵をラップする（P-256 ECDH-ES + HKDF-SHA256 + AES-256-GCM）。
      *
-     * @return array{wrapped_key: string, nonce: string, tag: string} 生バイト列（呼び出し側でbase64化する）
+     * 手順:
+     *   1. このファイル専用の一時P-256鍵ペアを生成する
+     *   2. 一時秘密鍵 × vault公開鍵 のECDHで共有秘密を得る（openssl_pkey_derive）
+     *   3. HKDF-SHA256で共有秘密からAES-256の鍵を導出する
+     *      （saltには一時公開鍵を使い、同じvault公開鍵でも毎回異なる鍵になるようにする）
+     *   4. その鍵でファイル鍵をAES-256-GCM暗号化する
+     *   5. 一時「秘密」鍵はここで捨てる。以降このファイル鍵をアンラップできるのは
+     *      vault秘密鍵を持つブラウザだけになる（サーバーには復号手段が残らない）
+     *
+     * RSA-OAEPではなくECDH-ESを選んだのは、PHPの openssl_public_encrypt が
+     * OAEPのハッシュを選択できずSHA-1 MGF1固定になるのに対し、ECDH + HKDF-SHA256 なら
+     * PHP（openssl_pkey_derive / hash_hkdf）とブラウザ（WebCrypto ECDH / HKDF）の
+     * 双方でモダンなプリミティブのまま、追加の依存なしに実装できるため。
+     *
+     * @param  string  $vaultPublicKeySpki  vaultのP-256公開鍵（SPKI DERの生バイト列）
+     * @return array{eph_public_key: string, wrapped_key: string, nonce: string, tag: string} 生バイト列（呼び出し側でbase64化する）
      */
-    public static function wrapFileKey(string $fileKey): array
+    public static function wrapFileKeyForVault(string $vaultPublicKeySpki, string $fileKey): array
     {
+        $vaultPublicKey = openssl_pkey_get_public(self::derToPem($vaultPublicKeySpki, 'PUBLIC KEY'));
+        if ($vaultPublicKey === false) {
+            throw new RuntimeException('vault公開鍵の読み込みに失敗しました。');
+        }
+
+        $ephemeral = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => self::EC_CURVE,
+        ]);
+        if ($ephemeral === false) {
+            throw new RuntimeException('一時鍵ペアの生成に失敗しました。');
+        }
+
+        $sharedSecret = openssl_pkey_derive($vaultPublicKey, $ephemeral);
+        if ($sharedSecret === false) {
+            throw new RuntimeException('ECDHの共有秘密の導出に失敗しました。');
+        }
+
+        $ephPublicKeySpki = self::pemToDer(openssl_pkey_get_details($ephemeral)['key']);
+
+        // saltに一時公開鍵を使うことで、同じvault公開鍵に対しても毎回異なるラップ鍵になる
+        $wrapKey = hash_hkdf('sha256', $sharedSecret, self::KEY_LEN, self::HKDF_INFO_FILE_KEY, $ephPublicKeySpki);
+
         $nonce = random_bytes(self::NONCE_LEN);
         $tag = '';
         $wrapped = openssl_encrypt(
             $fileKey,
             'aes-256-gcm',
-            self::masterKey(),
+            $wrapKey,
             OPENSSL_RAW_DATA,
             $nonce,
             $tag,
@@ -77,11 +134,48 @@ class SecretFileCryptoService
             throw new RuntimeException('ファイル鍵のラップに失敗しました。');
         }
 
-        return ['wrapped_key' => $wrapped, 'nonce' => $nonce, 'tag' => $tag];
+        return [
+            'eph_public_key' => $ephPublicKeySpki,
+            'wrapped_key' => $wrapped,
+            'nonce' => $nonce,
+            'tag' => $tag,
+        ];
     }
 
     /**
-     * マスターキーでファイル鍵をアンラップする
+     * DER（生バイト列）をPEMに変換する。opensslのPHP関数はPEMしか受け付けないため。
+     */
+    private static function derToPem(string $der, string $label): string
+    {
+        return "-----BEGIN {$label}-----\n"
+            .chunk_split(base64_encode($der), 64, "\n")
+            ."-----END {$label}-----\n";
+    }
+
+    /**
+     * PEMからDER（生バイト列）を取り出す。ブラウザのWebCryptoはSPKI/PKCS8のDERを直接扱うため、
+     * DBにはDERのbase64で保存する。
+     */
+    private static function pemToDer(string $pem): string
+    {
+        $body = preg_replace('/-----(BEGIN|END)[^-]+-----|\s+/', '', $pem);
+        $der = base64_decode((string) $body, true);
+
+        if ($der === false) {
+            throw new RuntimeException('PEMからDERへの変換に失敗しました。');
+        }
+
+        return $der;
+    }
+
+    /**
+     * マスターキーでファイル鍵をアンラップする。
+     *
+     * @deprecated E2E化により、通常の閲覧経路ではもう使わない（サーバーは復号能力を持たない）。
+     *             残しているのは `secrets:migrate-to-vault` が旧方式のファイルを
+     *             vault方式へ載せ替える一度きりの移行のためだけ。
+     *             移行完了後は 2026_08_08_000003 のマイグレーションで対象カラムごと消え、
+     *             SECRETS_MASTER_KEY も .env から削除できる。
      */
     public static function unwrapFileKey(string $wrappedKey, string $nonce, string $tag): string
     {
@@ -90,7 +184,7 @@ class SecretFileCryptoService
 
     /**
      * 指定したマスターキー（生バイト列）でファイル鍵をアンラップする。
-     * `secrets:rewrap`（マスターキーローテーション）で、現在の設定とは異なる旧マスターキーを使う場合に使う。
+     * `secrets:migrate-to-vault` が、現在の設定とは異なる旧マスターキーを使う場合に使う。
      */
     public static function unwrapFileKeyUsing(string $masterKeyRaw, string $wrappedKey, string $nonce, string $tag): string
     {
@@ -200,7 +294,7 @@ class SecretFileCryptoService
 
     /**
      * `base64:` プレフィックス付き/なしのbase64文字列を、検証付きで生バイト列にデコードする。
-     * `secrets:rewrap` がCLIオプションで渡された旧マスターキーをデコードする際にも使う。
+     * `secrets:migrate-to-vault` が旧マスターキーをデコードする際にも使う。
      */
     public static function decodeKeyString(string $configured): string
     {

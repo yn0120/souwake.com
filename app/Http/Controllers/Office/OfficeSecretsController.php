@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Office;
 use App\Http\Controllers\Controller;
 use App\Libraries\Utils;
 use App\Models\SecretFileModel;
+use App\Models\SecretVaultKeyModel;
 use App\Services\SecretFileCryptoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +27,8 @@ class OfficeSecretsController extends Controller
         $assign = [
             'records' => self::toGalleryArray($records),
             'hasMore' => $hasMore,
+            // vault未登録なら、ブラウザ側でまず鍵ペアを作らせる必要がある
+            'vaultRegistered' => SecretVaultKeyModel::query()->exists(),
         ];
 
         return view('office/secrets/index', compact('assign'));
@@ -62,7 +65,47 @@ class OfficeSecretsController extends Controller
         })->values()->all();
     }
 
-    public function view(Request $request, $id)
+    /**
+     * 復号に必要なメタデータを返す。鍵そのものは「vault公開鍵でラップされた状態」でしか出さないため、
+     * このレスポンスを傍受されてもファイルは復号できない（アンラップにはvault秘密鍵が要る）。
+     *
+     * ブラウザ側（secrets-sw.js）はこの情報だけで /secrets/raw/{id} の暗号文を復号できる。
+     */
+    public function meta(Request $request, $id)
+    {
+        $file = SecretFileModel::getBy(['id' => $id, 'status' => 'ready', 'method' => 'first']);
+        if (! $file || ! $file->vault_wrapped_key) {
+            abort(404);
+        }
+
+        return response()->json([
+            'uuid' => $file->uuid,
+            'mime_type' => $file->mime_type,
+            'size_bytes' => (int) $file->size_bytes,
+            'chunk_size' => SecretFileCryptoService::chunkSize(),
+            'tag_len' => SecretFileCryptoService::tagLength(),
+            'content_nonce_base' => $file->content_nonce_base,
+            'eph_public_key' => $file->eph_public_key,
+            'wrapped_key' => $file->vault_wrapped_key,
+            'wrap_nonce' => $file->vault_wrap_nonce,
+            'wrap_tag' => $file->vault_wrap_tag,
+        ]);
+    }
+
+    /**
+     * 暗号文をそのまま配信する。**サーバーは一切復号しない。**
+     *
+     * 実体は /var/encrypted 配下（ドキュメントルート外）にあるため、ここでは認可だけを行い、
+     * X-Accel-Redirect でnginxの internal location に配信を委ねる。こうすることで
+     *   - HTTP Range / 206 / 416 の処理がnginxのネイティブ実装になる（PHPで手実装する必要がない）
+     *   - PHPのプロセスを掴んだままの長時間ストリーミングが無くなる
+     *   - 出力バッファやzlibがレスポンス長を壊す余地が構造的に消える
+     * という利点がある。
+     *
+     * 旧実装（response()->stream()でサーバー側復号）との違いは、エッジにも回線にも
+     * 暗号文しか流れないこと。改ざん検知（GCMの認証失敗）もブラウザ側で行われる。
+     */
+    public function raw(Request $request, $id)
     {
         $file = SecretFileModel::getBy(['id' => $id, 'status' => 'ready', 'method' => 'first']);
         if (! $file) {
@@ -71,105 +114,15 @@ class OfficeSecretsController extends Controller
 
         $absolutePath = Storage::disk('secrets')->path($file->uuid);
         if (! is_file($absolutePath)) {
+            Utils::log('error', "暗号化ファイルの実体が見つからない OfficeSecretsController#raw id={$file->id}");
             abort(404);
         }
 
-        try {
-            $fileKey = SecretFileCryptoService::unwrapFileKey(
-                base64_decode($file->wrapped_key),
-                base64_decode($file->key_wrap_nonce),
-                base64_decode($file->key_wrap_tag),
-            );
-        } catch (\Throwable $e) {
-            Utils::log('error', "ファイルの鍵アンラップに失敗 OfficeSecretsController#view id={$file->id}");
-            abort(404);
-        }
-
-        $nonceBase = base64_decode($file->content_nonce_base);
-        $chunkSize = SecretFileCryptoService::chunkSize();
-        $tagLen = SecretFileCryptoService::tagLength();
-        $plainSize = (int) $file->size_bytes;
-        $totalChunks = (int) max(1, ceil($plainSize / $chunkSize));
-        $diskFileSize = filesize($absolutePath);
-
-        [$start, $end, $isPartial] = $this->resolveRange($request->header('Range'), $plainSize);
-        if ($start === null) {
-            return response('', 416, ['Content-Range' => "bytes */{$plainSize}"]);
-        }
-
-        $length = $end - $start + 1;
-        $uuid = $file->uuid;
-
-        $callback = function () use ($absolutePath, $fileKey, $nonceBase, $chunkSize, $tagLen, $totalChunks, $start, $end, $uuid, $diskFileSize) {
-            $handle = fopen($absolutePath, 'rb');
-            if ($handle === false) {
-                return;
-            }
-
-            $chunkStartIndex = intdiv($start, $chunkSize);
-            $chunkEndIndex = intdiv($end, $chunkSize);
-
-            for ($i = $chunkStartIndex; $i <= $chunkEndIndex; $i++) {
-                $onDiskOffset = $i * ($chunkSize + $tagLen);
-                $isLast = $i === $totalChunks - 1;
-                $blockSize = $isLast ? ($diskFileSize - $onDiskOffset) : ($chunkSize + $tagLen);
-
-                fseek($handle, $onDiskOffset);
-                $encrypted = fread($handle, $blockSize);
-
-                try {
-                    $plaintext = SecretFileCryptoService::decryptChunk($fileKey, $nonceBase, $i, $isLast, $uuid, $encrypted);
-                } catch (\Throwable $e) {
-                    // 改ざん・破損検知。機密情報を含めずログに残し、配信を即座に打ち切る（リトライ・フォールバックはしない）
-                    Utils::log('error', "ファイル復号失敗のため配信を打ち切り uuid={$uuid} chunk={$i}");
-                    break;
-                }
-
-                $chunkPlainStart = $i * $chunkSize;
-                $sliceStart = max(0, $start - $chunkPlainStart);
-                $sliceEnd = min(strlen($plaintext) - 1, $end - $chunkPlainStart);
-
-                if ($sliceStart <= $sliceEnd) {
-                    echo substr($plaintext, $sliceStart, $sliceEnd - $sliceStart + 1);
-                }
-                flush();
-            }
-
-            fclose($handle);
-        };
-
-        $headers = [
-            'Content-Type' => $file->mime_type,
-            'Content-Length' => (string) $length,
-            'Accept-Ranges' => 'bytes',
-            'Content-Disposition' => 'inline; filename="'.addslashes($file->original_name).'"',
-        ];
-        if ($isPartial) {
-            $headers['Content-Range'] = "bytes {$start}-{$end}/{$plainSize}";
-        }
-
-        return response()->stream($callback, $isPartial ? 206 : 200, $headers);
-    }
-
-    private function resolveRange(?string $rangeHeader, int $plainSize): array
-    {
-        if (! $rangeHeader || ! preg_match('/bytes=(\d*)-(\d*)/', $rangeHeader, $m)) {
-            return [0, max(0, $plainSize - 1), false];
-        }
-
-        if ($m[1] === '' && $m[2] !== '') {
-            $suffixLen = (int) $m[2];
-            $start = max(0, $plainSize - $suffixLen);
-            $end = $plainSize - 1;
-        } else {
-            $start = $m[1] === '' ? 0 : (int) $m[1];
-            $end = $m[2] === '' ? $plainSize - 1 : (int) $m[2];
-        }
-
-        if ($start > $end || $end >= $plainSize || $start < 0) {
-            return [null, null, false];
-        }
-
-        return [$start, $end, true];
+        return response('', 200, [
+            // prod.conf / local.conf の `location /__secrets_raw/ { internal; alias /var/encrypted/; }` に対応する
+            'X-Accel-Redirect' => '/__secrets_raw/'.$file->uuid,
+            // 中身は暗号文だが、内容の推測材料を与えないよう汎用のtypeにしておく
+            'Content-Type' => 'application/octet-stream',
+        ]);
     }
 }
