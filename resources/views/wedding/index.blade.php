@@ -539,6 +539,6 @@
 
     <footer class="border-t border-sand-200 py-10 text-center text-xs text-ink-700/60">
         <p>ご不明な点がございましたら、新郎新婦まで直接ご連絡ください。</p>
-        <p class="mt-2">© {{ date('Y') }} Wedding Invitation</p>
+        <p class="mt-2">© {{ date('Y') }} wedding.souwake.com</p>
     </footer>
 @endsection
