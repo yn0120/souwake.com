@@ -15,8 +15,8 @@
 【ご回答内容】<br>
 ―――――――――――――――――――<br>
 出欠：{{ $assign['rsvp']->attendance === 'attending' ? 'ご出席' : 'ご欠席' }}<br>
-お名前：{{ $assign['rsvp']->name_sei }} {{ $assign['rsvp']->name_mei }}（{{ $assign['rsvp']->kana_sei }} {{ $assign['rsvp']->kana_mei }}）<br>
-ご住所：〒{{ $assign['rsvp']->postal_code }} {{ $assign['rsvp']->prefecture }}{{ $assign['rsvp']->city }}{{ $assign['rsvp']->address }} {{ $assign['rsvp']->building }}<br>
+お名前：{{ $assign['rsvp']->fullName() }}<br>
+ご住所：{{ $assign['rsvp']->fullAddress() }}<br>
 電話番号：{{ $assign['rsvp']->phone }}<br>
 メールアドレス：{{ $assign['rsvp']->email }}<br>
 @if ($assign['rsvp']->attendance === 'attending')
@@ -25,10 +25,16 @@
     出発日：{{ optional($assign['rsvp']->departure_date)->format('Y年m月d日') ?: '未定' }}<br>
     宿泊先ホテル：{{ $assign['rsvp']->hotel_name ?: '未定' }}<br>
     衣装サイズ：{{ $assign['rsvp']->costume_size ?: '選択なし' }}<br>
-    同伴者：{{ $assign['rsvp']->companion_flag ? $assign['rsvp']->companion_name.'（'.$assign['rsvp']->companion_kana.'）' : 'なし' }}<br>
+    同伴者：{{ $assign['rsvp']->companions->isEmpty() ? 'なし' : $assign['rsvp']->companions->count().'名' }}<br>
+    @foreach ($assign['rsvp']->companions as $companion)
+        　{{ $loop->iteration }}. {{ $companion->fullName() }} 様／お食事：{{ $companion->mealLabel() }}<br>
+    @endforeach
 @endif
 @if ($assign['rsvp']->message)
     メッセージ：{{ $assign['rsvp']->message }}<br>
+@endif
+@if ($assign['rsvp']->photos->isNotEmpty())
+    お祝い画像：{{ $assign['rsvp']->photos->count() }}枚をお預かりしました<br>
 @endif
 ―――――――――――――――――――<br><br>
 

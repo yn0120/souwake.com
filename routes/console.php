@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 // ファイル機能のデッドマンズスイッチ。「7日を1秒でも超えたら」の精度を確保するため15分間隔で実行する。
 // このコマンド自体をphp artisan schedule:work（scheduler コンテナ）で常時起動しておく必要がある。
 Schedule::command('secrets:enforce-retention')->everyFifteenMinutes()->withoutOverlapping();
+
+// 結婚式サイト：アップロードされたまま送信されなかったお祝い画像の掃除。
+Schedule::command('wedding:photos-cleanup')->dailyAt('04:10')->withoutOverlapping();

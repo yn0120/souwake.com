@@ -12,7 +12,11 @@ use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
 use App\Http\Controllers\Wedding\WeddingRsvpController;
+use App\Http\Controllers\Wedding\WeddingRsvpPhotoController;
 use App\Http\Middleware\Office\CheckRoutePermission;
+use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\RedirectIfNotAuthenticated;
+use App\Http\Middleware\RedirectIfNoUser;
 use App\Http\Middleware\Secrets\EnsureSecretsAdmin;
 use App\Http\Middleware\Secrets\NoStoreCache;
 use App\Http\Middleware\Secrets\RedirectIfAuthenticatedSecrets;
@@ -20,9 +24,6 @@ use App\Http\Middleware\Secrets\RedirectIfNotAuthenticatedSecrets;
 use App\Http\Middleware\Secrets\RedirectIfNoUserSecrets;
 use App\Http\Middleware\Secrets\RequireSecretsPassword;
 use App\Http\Middleware\TouchAdminActivity;
-use App\Http\Middleware\RedirectIfAuthenticated;
-use App\Http\Middleware\RedirectIfNotAuthenticated;
-use App\Http\Middleware\RedirectIfNoUser;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(function () {
@@ -162,6 +163,15 @@ Route::domain(config('app.env_domain').'wedding.'.config('app.domain'))->group(f
     Route::get('/', [WeddingRsvpController::class, 'index'])->name('weddingRsvpInput');
     Route::post('/rsvp', [WeddingRsvpController::class, 'createExecute'])->name('weddingRsvpCreateExecute');
     Route::get('/rsvp/complete', [WeddingRsvpController::class, 'complete'])->name('weddingRsvpComplete');
+
+    // お祝い画像（すべてAJAX）。ログイン不要の公開エンドポイントのため、
+    // アップロード・削除はスロットリングで連投を抑える。
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::post('/rsvp/photos', [WeddingRsvpPhotoController::class, 'store'])->name('weddingRsvpPhotoStore');
+        Route::delete('/rsvp/photos/{uuid}', [WeddingRsvpPhotoController::class, 'destroy'])->name('weddingRsvpPhotoDestroy');
+    });
+    Route::post('/rsvp/photos/status', [WeddingRsvpPhotoController::class, 'status'])->middleware('throttle:120,1')->name('weddingRsvpPhotoStatus');
+    Route::get('/rsvp/photos/{uuid}', [WeddingRsvpPhotoController::class, 'show'])->name('weddingRsvpPhotoShow');
 });
 
 // ファイル管理機能（office.souwake.com）

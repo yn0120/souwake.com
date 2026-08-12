@@ -210,6 +210,21 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+        // 結婚式サイトのお祝い画像（リサイズ・圧縮）専用キュー。GDでの画像デコードは
+        // 一時的にメモリを食うためsupervisor-1（128MB）とは分け、メモリを厚めに確保する。
+        'supervisor-wedding' => [
+            'connection' => 'redis',
+            'queue' => ['wedding'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 2,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 384,
+            'tries' => 2,
+            'timeout' => 300,
+            'nice' => 5,
+        ],
         // ファイル機能（圧縮・暗号化）専用キュー。動画のffmpegトランスコードはCPU/メモリ負荷が高く、
         // 本番のRAM（2GB）は限られているため、他のキューと分離した上で同時実行数を絞る。
         'supervisor-secrets' => [
@@ -233,6 +248,9 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-wedding' => [
+                'maxProcesses' => 2,
+            ],
             'supervisor-secrets' => [
                 'maxProcesses' => 1,
             ],
@@ -241,6 +259,9 @@ return [
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-wedding' => [
+                'maxProcesses' => 2,
             ],
             'supervisor-secrets' => [
                 'maxProcesses' => 1,

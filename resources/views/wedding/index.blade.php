@@ -6,12 +6,12 @@
 @section('content')
     {{-- ▼▼ ここから下、新郎新婦のお名前・日付・会場情報などは仮の文言です。実際の内容に書き換えてください ▼▼ --}}
     @php
-        $weddingDateText = '2026年11月8日（日）';
-        $rsvpDeadlineText = config('services.wedding.rsvp_deadline', '2026年10月4日（日）');
-        $ceremonyTime = '午前11時 挙式';
-        $receptionTime = '正午 披露宴';
-        $venueName = '○○○○リゾート ウェディングチャペル';
-        $venueAddress = '〒900-0000 沖縄県○○市○○ 000-0';
+        $weddingDateText = '2027年03月21日（日）';
+        $rsvpDeadlineText = config('services.wedding.rsvp_deadline', '2026年12月31日（木）');
+        $ceremonyTime = '10時15分 挙式';
+        $receptionTime = '12時15分 披露宴';
+        $venueName = 'ザ・ギノザリゾート 美らの教会';
+        $venueAddress = '〒904-1303 沖縄県国頭郡宜野座村惣慶1182';
 
         $prefectures = [
             '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
@@ -28,6 +28,17 @@
         $noteClass = 'mt-1 text-xs text-ink-700/60';
         $errorClass = 'mt-1 text-xs text-clay-600';
         $old = fn ($key, $default = null) => old($key, $default);
+
+        // お祝い画像の上限（サーバー側のバリデーションと同じ値をJS・表示にも渡す）
+        $photoMaxFiles = App\Http\Controllers\Wedding\WeddingRsvpPhotoController::MAX_FILES_PER_SESSION;
+        $photoMaxSize = App\Http\Controllers\Wedding\WeddingRsvpPhotoController::MAX_FILE_SIZE;
+
+        // 同伴者（連名）。バリデーションエラー後は入力済みの行数を復元し、初回表示は1行だけ出す
+        $companionMaxCount = App\Models\WeddingRsvpCompanionModel::MAX_COUNT;
+        $companionRows = array_values((array) old('companions', [[]])) ?: [[]];
+
+        // ご住所の国。既定は日本
+        $selectedCountry = $old('country', App\Models\WeddingRsvpModel::COUNTRY_JP);
     @endphp
 
     {{-- ナビゲーション --}}
@@ -60,7 +71,7 @@
         <div class="relative z-10 mx-auto w-full max-w-5xl px-6 pb-16 pt-40 text-sand-50">
             <p class="wedding-reveal animate-fade-up text-xs tracking-[0.4em] text-sand-100/90">OKINAWA RESORT WEDDING</p>
             <h1 class="wedding-reveal animate-fade-up mt-4 font-serif-jp text-4xl leading-relaxed sm:text-5xl">
-                ○○ ○○ &amp; ○○ ○○
+                仲道 祐貴 &amp; 加藤 奈緒
             </h1>
             <p class="wedding-reveal animate-fade-up mt-5 text-base text-sand-100/95 sm:text-lg">{{ $weddingDateText }}</p>
             <a href="#rsvp" data-scroll class="wedding-reveal animate-fade-up mt-8 inline-flex items-center gap-2 rounded-full border border-sand-50/70 px-6 py-2.5 text-sm tracking-wide transition hover:bg-sand-50 hover:text-moss-700">
@@ -92,7 +103,7 @@
                     ご多用中、また遠方への旅となり恐縮ではございますが、<br class="hidden sm:block">
                     ぜひご出席いただけますよう、謹んでご案内申し上げます。
                 </p>
-                <p class="mt-8 text-right text-ink-700">○○ ○○ ・ ○○ ○○</p>
+                <p class="mt-8 text-right text-ink-700">仲道 祐貴 ・ 加藤 奈緒</p>
             </div>
         </section>
 
@@ -111,8 +122,8 @@
                 </div>
                 <div class="rounded-2xl border border-sand-200 bg-white/60 p-7">
                     <p class="font-serif-jp text-lg text-moss-700">{{ $venueName }}</p>
-                    <p class="mt-4 text-sm leading-relaxed text-ink-700">{{ $venueAddress }}</p>
-                    <p class="mt-3 text-xs text-ink-700/60">※ 会場までのアクセス・地図は追ってご案内いたします。</p>
+                    <p class="mt-4 text-sm leading-relaxed text-ink-700"><a href="https://maps.app.goo.gl/E2vn1awSKASX7pN57" target="_blank">{{ $venueAddress }}</a></p>
+                    <p class="mt-3 text-xs text-ink-700/60"><a href="https://maps.app.goo.gl/E2vn1awSKASX7pN57" target="_blank">https://maps.app.goo.gl/E2vn1awSKASX7pN57</a></p>
                 </div>
             </div>
 
@@ -183,7 +194,15 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('weddingRsvpCreateExecute') }}" class="mx-auto mt-10 max-w-2xl space-y-12">
+            {{-- data-restore-input: 入力途中の内容をlocalStorageへ退避・復元する（wedding.js）。
+                 バリデーションエラー等でold()が入っている場合はサーバー側の値を優先するため復元しない。 --}}
+            <form
+                method="POST"
+                action="{{ route('weddingRsvpCreateExecute') }}"
+                class="mx-auto mt-10 max-w-2xl space-y-12"
+                data-rsvp-form
+                data-restore-input="{{ old() ? '0' : '1' }}"
+            >
                 @csrf
 
                 {{-- ハニーポット（人間には非表示。ボット対策） --}}
@@ -241,16 +260,43 @@
                         </div>
                     </div>
 
+                    {{-- ご住所の国。日本／アメリカで住所欄の項目・自動入力先のAPIを切り替える（wedding.js） --}}
+                    <div data-country-switch>
+                        <span class="{{ $labelClass }}">お住まいの国 / Country <span class="text-clay-600">※必須</span></span>
+                        <div class="grid grid-cols-2 gap-3">
+                            @foreach (App\Models\WeddingRsvpModel::countryOptions() as $value => $label)
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="country" value="{{ $value }}" class="peer sr-only" {{ $selectedCountry === $value ? 'checked' : '' }} data-country-option>
+                                    <span class="block rounded-xl border border-sand-300 bg-white/60 px-4 py-3 text-center font-medium text-ink-700 transition peer-checked:border-moss-600 peer-checked:bg-moss-600 peer-checked:text-sand-50">
+                                        {{ $label }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <p class="{{ $noteClass }} hidden" data-country-note="US">
+                            フリガナは任意です。/ Furigana (katakana) is optional for guests outside Japan.
+                        </p>
+                        @error('country') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+                    </div>
+
                     <div>
-                        <p class="{{ $labelClass }}">ご住所 <span class="text-clay-600">※必須</span></p>
+                        <p class="{{ $labelClass }}">ご住所 / Address <span class="text-clay-600">※必須</span></p>
                         <p class="{{ $noteClass }} mb-3">引き出物や内祝いの発送、案内状の送付に使用いたします。</p>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <input class="{{ $inputClass }}" type="text" name="postal_code" placeholder="〒900-0001" value="{{ $old('postal_code') }}">
+                                {{-- 入力後（フォーカスアウト時）に数字以外を取り除き、住所を自動セットする（日本=Zipcloud／アメリカ=Zippopotam.us） --}}
+                                <input class="{{ $inputClass }}" type="text" name="postal_code" inputmode="numeric" autocomplete="postal-code" maxlength="10" value="{{ $old('postal_code') }}"
+                                    data-postal-code
+                                    data-placeholder-jp="9000001"
+                                    data-placeholder-us="90210 (ZIP Code)">
+                                <p class="{{ $noteClass }}" data-postal-note
+                                    data-note-jp="ハイフンなしの数字7桁でご入力いただくと、住所が自動で入力されます。"
+                                    data-note-us="Enter your 5-digit ZIP code and your state and city will be filled in automatically."></p>
+                                <p class="{{ $errorClass }} hidden" data-postal-message></p>
                                 @error('postal_code') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                             </div>
-                            <div>
-                                <select class="{{ $inputClass }}" name="prefecture">
+                            <div data-country-only="JP">
+                                <select class="{{ $inputClass }}" name="prefecture" data-address-prefecture>
                                     <option value="">都道府県を選択</option>
                                     @foreach ($prefectures as $prefecture)
                                         <option value="{{ $prefecture }}" @selected($old('prefecture') === $prefecture)>{{ $prefecture }}</option>
@@ -258,17 +304,32 @@
                                 </select>
                                 @error('prefecture') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                             </div>
+                            <div data-country-only="US" class="hidden">
+                                <select class="{{ $inputClass }}" name="state" data-address-state>
+                                    <option value="">Select your state</option>
+                                    @foreach (App\Models\WeddingRsvpModel::usStates() as $value => $label)
+                                        <option value="{{ $value }}" @selected($old('state') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('state') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+                            </div>
                         </div>
                         <div class="mt-4">
-                            <input class="{{ $inputClass }}" type="text" name="city" placeholder="市区町村" value="{{ $old('city') }}">
+                            <input class="{{ $inputClass }}" type="text" name="city" value="{{ $old('city') }}" data-address-city
+                                data-placeholder-jp="市区町村"
+                                data-placeholder-us="City">
                             @error('city') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                         <div class="mt-4">
-                            <input class="{{ $inputClass }}" type="text" name="address" placeholder="番地" value="{{ $old('address') }}">
+                            <input class="{{ $inputClass }}" type="text" name="address" value="{{ $old('address') }}" data-address-street
+                                data-placeholder-jp="番地"
+                                data-placeholder-us="Street address（例：123 Main St）">
                             @error('address') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                         <div class="mt-4">
-                            <input class="{{ $inputClass }}" type="text" name="building" placeholder="建物名・部屋番号（任意）" value="{{ $old('building') }}">
+                            <input class="{{ $inputClass }}" type="text" name="building" value="{{ $old('building') }}"
+                                data-placeholder-jp="建物名・部屋番号（任意）"
+                                data-placeholder-us="Apt / Suite（optional）">
                             @error('building') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -276,7 +337,9 @@
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="{{ $labelClass }}" for="phone">電話番号（当日連絡がつく携帯番号） <span class="text-clay-600">※必須</span></label>
-                            <input class="{{ $inputClass }}" type="tel" id="phone" name="phone" placeholder="090-1234-5678" value="{{ $old('phone') }}">
+                            <input class="{{ $inputClass }}" type="tel" id="phone" name="phone" value="{{ $old('phone') }}"
+                                data-placeholder-jp="090-1234-5678"
+                                data-placeholder-us="+1 555-123-4567">
                             @error('phone') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                         <div>
@@ -294,20 +357,20 @@
 
                     <div>
                         <label class="{{ $labelClass }}" for="allergy">アレルギー・お食事に関するご要望</label>
-                        <p class="{{ $noteClass }} mb-2">えび・小麦・アルコールNGなど、沖縄の食材（海老・豚肉・マンゴー等）を多く使用いたしますのでお気軽にお書きください。</p>
-                        <textarea class="{{ $inputClass }}" id="allergy" name="allergy" rows="3" placeholder="例：えびアレルギーがあります">{{ $old('allergy') }}</textarea>
+                        <textarea class="{{ $inputClass }}" id="allergy" name="allergy" rows="3" placeholder="えび・小麦・アルコールNGなど、沖縄の食材（海老・豚肉・マンゴー等）を多く使用いたしますので苦手なものも含めお気軽にご入力ください。">{{ $old('allergy') }}</textarea>
                         @error('allergy') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="{{ $labelClass }}" for="arrival_date">沖縄への到着日</label>
-                            <input class="{{ $inputClass }}" type="date" id="arrival_date" name="arrival_date" value="{{ $old('arrival_date') }}">
+                            {{-- bootstrap-datepicker（public/assets/vendor/libs/bootstrap-datepicker）でカレンダーを表示する --}}
+                            <input class="{{ $inputClass }} datepicker" type="text" id="arrival_date" name="arrival_date" placeholder="2027-03-20" autocomplete="off" value="{{ $old('arrival_date') }}">
                             @error('arrival_date') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="{{ $labelClass }}" for="departure_date">沖縄からの出発日</label>
-                            <input class="{{ $inputClass }}" type="date" id="departure_date" name="departure_date" value="{{ $old('departure_date') }}">
+                            <input class="{{ $inputClass }} datepicker" type="text" id="departure_date" name="departure_date" placeholder="2027-03-22" autocomplete="off" value="{{ $old('departure_date') }}">
                             @error('departure_date') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -353,39 +416,45 @@
                         @error('companion_flag') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
 
-                    <div id="companion-fields" class="space-y-6 {{ $old('companion_flag') === '1' ? '' : 'hidden' }}">
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <label class="{{ $labelClass }}" for="companion_name">同伴者お名前</label>
-                                <input class="{{ $inputClass }}" type="text" id="companion_name" name="companion_name" placeholder="山田 花子" value="{{ $old('companion_name') }}">
-                                @error('companion_name') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="{{ $labelClass }}" for="companion_kana">同伴者フリガナ</label>
-                                <input class="{{ $inputClass }}" type="text" id="companion_kana" name="companion_kana" placeholder="ヤマダ ハナコ" value="{{ $old('companion_kana') }}">
-                                @error('companion_kana') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
-                            </div>
+                    {{-- 同伴者は連名（複数）で入力できる。行の追加・削除はwedding.jsが担当 --}}
+                    <div
+                        id="companion-fields"
+                        class="space-y-6 {{ $old('companion_flag') === '1' ? '' : 'hidden' }}"
+                        data-companion-fields
+                        data-max-count="{{ $companionMaxCount }}"
+                    >
+                        <p class="{{ $noteClass }}">
+                            ご家族・ご夫婦など複数名でご出席される場合は、「＋同伴者を追加」からご同伴者の人数分ご入力ください（最大{{ $companionMaxCount }}名）。
+                        </p>
+
+                        @error('companions') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+
+                        <div class="space-y-5" data-companion-rows>
+                            @foreach ($companionRows as $index => $companion)
+                                @include('wedding/parts/companion_row', [
+                                    'index' => $index,
+                                    'number' => $loop->iteration,
+                                    'companion' => (array) $companion,
+                                ])
+                            @endforeach
                         </div>
 
-                        <div>
-                            <label class="{{ $labelClass }}" for="companion_meal">同伴者のお食事</label>
-                            <select class="{{ $inputClass }}" id="companion_meal" name="companion_meal">
-                                <option value="">選択してください</option>
-                                <option value="adult" @selected($old('companion_meal') === 'adult')>大人メニュー</option>
-                                <option value="child_lunch" @selected($old('companion_meal') === 'child_lunch')>お子様ランチ</option>
-                                <option value="child_plate" @selected($old('companion_meal') === 'child_plate')>お子様プレート</option>
-                                <option value="none" @selected($old('companion_meal') === 'none')>不要</option>
-                            </select>
-                            @error('companion_meal') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="{{ $labelClass }}" for="child_info">お子様連れの場合の追加情報</label>
-                            <p class="{{ $noteClass }} mb-2">年齢、ベビーカーの持ち込みの有無などをご記入ください。</p>
-                            <textarea class="{{ $inputClass }}" id="child_info" name="child_info" rows="3" placeholder="例：2歳児1名、ベビーカー持参予定">{{ $old('child_info') }}</textarea>
-                            @error('child_info') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="button" data-companion-add class="inline-flex items-center gap-1.5 rounded-full border border-moss-600 px-5 py-2 text-sm font-medium text-moss-700 transition hover:bg-moss-600 hover:text-sand-50">
+                                <span aria-hidden="true">＋</span>同伴者を追加
+                            </button>
+                            <p data-companion-message class="{{ $errorClass }} mt-0 hidden"></p>
                         </div>
                     </div>
+
+                    {{-- 同伴者1名分のテンプレート（__INDEX__・__NUMBER__はJSが実際の番号へ置換する） --}}
+                    <template data-companion-row-template>
+                        @include('wedding/parts/companion_row', [
+                            'index' => '__INDEX__',
+                            'number' => '__NUMBER__',
+                            'companion' => [],
+                        ])
+                    </template>
                 </fieldset>
 
                 {{-- 4. 任意項目・メッセージ --}}
@@ -404,6 +473,58 @@
                         <input class="{{ $inputClass }}" type="text" id="song_request" name="song_request" placeholder="アーティスト名・曲名" value="{{ $old('song_request') }}">
                         @error('song_request') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
+
+                    {{-- お祝い画像。選択した時点で1枚ずつ非同期アップロードし、サーバー側（Horizon）で縮小処理を行う --}}
+                    <div
+                        data-photo-uploader
+                        data-upload-url="{{ route('weddingRsvpPhotoStore') }}"
+                        data-status-url="{{ route('weddingRsvpPhotoStatus') }}"
+                        data-destroy-url="{{ route('weddingRsvpPhotoDestroy', ['uuid' => '__UUID__']) }}"
+                        data-max-files="{{ $photoMaxFiles }}"
+                        data-max-size="{{ $photoMaxSize }}"
+                    >
+                        <label class="{{ $labelClass }}" for="celebration_photos">お祝い画像（任意）</label>
+                        <p class="{{ $noteClass }} mb-3">
+                            お二人との思い出のお写真や、お祝いメッセージの画像をお送りいただけます。<br>
+                            JPEG・PNG・WebP・GIF・HEIC形式、1枚{{ (int) ($photoMaxSize / 1024 / 1024) }}MBまで、最大{{ $photoMaxFiles }}枚までご選択いただけます。
+                        </p>
+
+                        <input type="file" id="celebration_photos" class="sr-only" accept="image/*" multiple data-photo-input>
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="button" data-photo-add class="inline-flex items-center gap-1.5 rounded-full border border-moss-600 px-5 py-2 text-sm font-medium text-moss-700 transition hover:bg-moss-600 hover:text-sand-50">
+                                <span aria-hidden="true">＋</span>画像を追加
+                            </button>
+                            <button type="button" data-photo-clear class="hidden items-center gap-1.5 rounded-full border border-clay-500/60 px-5 py-2 text-sm font-medium text-clay-700 transition hover:bg-clay-600 hover:text-sand-50">
+                                <span aria-hidden="true">×</span>すべて削除
+                            </button>
+                        </div>
+
+                        <p data-photo-error class="{{ $errorClass }} hidden"></p>
+
+                        <p data-photo-empty class="{{ $noteClass }} mt-3">まだ画像は選択されていません。</p>
+                        <ul data-photo-list class="mt-4 hidden grid-cols-2 gap-3 sm:grid-cols-3"></ul>
+
+                        {{-- アップロード済み画像のuuid（hidden inputとしてJSが生成）--}}
+                        <div data-photo-tokens class="hidden"></div>
+                        <input type="hidden" name="photo_session_token" value="" data-photo-session-token>
+                    </div>
+
+                    {{-- 画像1枚分のテンプレート --}}
+                    <template data-photo-item-template>
+                        <li class="group relative overflow-hidden rounded-xl border border-sand-300 bg-white/60" data-photo-item>
+                            <div class="aspect-square w-full overflow-hidden bg-sand-100">
+                                <img alt="" class="h-full w-full object-cover" data-photo-thumb>
+                            </div>
+                            <div class="flex items-center justify-between gap-2 px-2.5 py-2">
+                                <span class="truncate text-xs text-ink-700/80" data-photo-name></span>
+                                <button type="button" data-photo-remove class="shrink-0 rounded-full border border-clay-500/60 px-2.5 py-1 text-xs text-clay-700 transition hover:bg-clay-600 hover:text-sand-50">
+                                    削除
+                                </button>
+                            </div>
+                            <span data-photo-status class="pointer-events-none absolute left-2 top-2 rounded-full bg-ink-900/70 px-2 py-0.5 text-[10px] tracking-wide text-sand-50"></span>
+                        </li>
+                    </template>
                 </fieldset>
 
                 <div class="pt-4 text-center">

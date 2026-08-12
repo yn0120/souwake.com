@@ -76,6 +76,17 @@ return [
             'report' => false,
         ],
 
+        // 結婚式サイト：ゲストがアップロードした「お祝い画像」の保管先。
+        // 招待ページ自体がnoindexの非公開サイトのため、publicディスク（＝直リンク可能）ではなく
+        // 非公開領域に置き、コントローラ経由（uuid指定）でのみ配信する。
+        // staging/ に変換前の原本、photos/ に変換後の画像を置く。
+        'wedding_photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/wedding-photos'),
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*
