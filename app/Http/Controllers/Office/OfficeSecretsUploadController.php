@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessSecretFileUpload;
 use App\Libraries\Utils;
 use App\Models\SecretFileModel;
-use App\Services\SecureDeleteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -26,9 +25,8 @@ class OfficeSecretsUploadController extends Controller
 
     /**
      * Dropzone.jsのチャンクアップロードプロトコル（dzuuid/dzchunkindex/dztotalchunkcount）を受ける。
-     * 平文チャンクは secrets_tmp（SECRETS_TMP_PATH=/var/encrypted/tmp。暗号化ボリュームの内側だが
-     * 中身は平文）に再結合し、最終チャンク到着時にProcessSecretFileUploadジョブ（圧縮→暗号化）へ
-     * 引き継ぐ。ジョブ側は完了・失敗いずれの場合もfinallyでステージングをwipeする。
+     * 平文チャンクは/var/encryptedではなく secrets_tmp（通常ディスク）に再結合し、
+     * 最終チャンク到着時にProcessSecretFileUploadジョブ（圧縮→暗号化）へ引き継ぐ。
      */
     public function chunk(Request $request)
     {
@@ -79,19 +77,6 @@ class OfficeSecretsUploadController extends Controller
         stream_copy_to_stream($in, $out);
         fclose($in);
         fclose($out);
-
-        // 上のdztotalfilesize検査はクライアントの自己申告値でしかなく、小さく偽って
-        // チャンクを無限に送りつければディスクを埋められる。実際に書き終えた累積サイズでも
-        // 必ず検査し、超過した時点でステージングを潰して打ち切る。
-        clearstatcache(true, $stagingPath);
-        $writtenSize = filesize($stagingPath);
-        if ($writtenSize !== false && $writtenSize > self::MAX_TOTAL_SIZE) {
-            Utils::log('warning', "アップロードの累積サイズが上限を超えたため中断 uuid={$uuid} written={$writtenSize}");
-            SecureDeleteService::wipeFile($stagingPath);
-            SecretFileModel::where('uuid', $uuid)->update(['status' => 'failed', 'staging_path' => null]);
-
-            return response()->json(['error' => 'ファイルサイズが上限を超えています。'], 413);
-        }
 
         if ($chunkIndex >= $totalChunks - 1) {
             $file = SecretFileModel::getBy(['uuid' => $uuid, 'method' => 'first']);

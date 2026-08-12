@@ -23,7 +23,7 @@
 
 @push ('js')
     <script src="/assets/vendor/libs/dropzone/dropzone.js"></script>
-    <script nonce="{{ $cspNonce }}">
+    <script>
         Dropzone.autoDiscover = false;
 
         const secretsDropzone = new Dropzone('#secrets-dropzone', {

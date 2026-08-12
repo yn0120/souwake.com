@@ -10,7 +10,6 @@ use App\Http\Controllers\Office\OfficeSecretsAuthController;
 use App\Http\Controllers\Office\OfficeSecretsController;
 use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
-use App\Http\Controllers\Office\OfficeSecretsVaultController;
 use App\Http\Controllers\Office\OfficeTopController;
 use App\Http\Controllers\Wedding\WeddingRsvpController;
 use App\Http\Middleware\Office\CheckRoutePermission;
@@ -172,9 +171,7 @@ Route::domain(config('app.env_domain').'wedding.'.config('app.domain'))->group(f
 Route::domain(config('app.env_domain').'office.'.config('app.domain'))->group(function () {
     Route::middleware([RedirectIfAuthenticatedSecrets::class])->group(function () {
         Route::get('/login', [OfficeSecretsAuthController::class, 'loginInput'])->name('officeSecretsLoginInput');
-        // 総当たり対策のレート制限。Cloudflare側にも同等のルールを置くが、エッジの設定に
-        // 依存せずorigin単体でも守れるようにアプリ側にも必ず持たせる（多層防御）。
-        Route::post('/login', [OfficeSecretsAuthController::class, 'loginExecute'])->middleware('throttle:5,1')->name('officeSecretsLoginExecute');
+        Route::post('/login', [OfficeSecretsAuthController::class, 'loginExecute'])->name('officeSecretsLoginExecute');
     });
 
     Route::get('/logout', [OfficeSecretsAuthController::class, 'logout'])->name('officeSecretsLogout');
@@ -186,33 +183,17 @@ Route::domain(config('app.env_domain').'office.'.config('app.domain'))->group(fu
         TouchAdminActivity::class,
         NoStoreCache::class,
     ])->group(function () {
-        // 固定パスワードの入力自体はRequireSecretsPasswordの外に置く（無限リダイレクト防止）。
-        // この2本だけが例外であり、他のsecrets系ルートは必ずRequireSecretsPassword配下に置くこと。
+        // 固定パスワードの入力自体はRequireSecretsPasswordの外に置く（無限リダイレクト防止）
         Route::get('/secrets/password', [OfficeSecretsPasswordController::class, 'input'])->name('officeSecretsPasswordInput');
-        Route::post('/secrets/password', [OfficeSecretsPasswordController::class, 'verify'])->middleware('throttle:5,1')->name('officeSecretsPasswordVerify');
+        Route::post('/secrets/password', [OfficeSecretsPasswordController::class, 'verify'])->name('officeSecretsPasswordVerify');
+
+        Route::get('/secrets/upload', [OfficeSecretsUploadController::class, 'input'])->name('officeSecretsUploadInput');
+        Route::post('/secrets/upload', [OfficeSecretsUploadController::class, 'chunk'])->name('officeSecretsUploadChunk');
 
         Route::middleware([RequireSecretsPassword::class])->group(function () {
             Route::get('/secrets', [OfficeSecretsController::class, 'index'])->name('officeSecretsIndex');
             Route::get('/secrets/list', [OfficeSecretsController::class, 'list'])->name('officeSecretsList');
-
-            // 閲覧はE2E暗号化。サーバーは復号せず、
-            //   - /secrets/meta/{id} で「vault公開鍵でラップされたままの鍵」とチャンク情報を返し
-            //   - /secrets/raw/{id}  で暗号文そのものを（X-Accel-Redirectでnginxから）返す
-            // ブラウザのService Worker（secrets-sw.js）が /secrets/media/{id} を横取りして
-            // 復号し、平文座標の206レスポンスに組み立て直す。
-            Route::get('/secrets/meta/{id}', [OfficeSecretsController::class, 'meta'])->name('officeSecretsMeta');
-            Route::get('/secrets/raw/{id}', [OfficeSecretsController::class, 'raw'])->name('officeSecretsRaw');
-
-            // vault鍵（E2E復号鍵）の登録・一覧。秘密鍵はラップ済みのものしかやり取りしない。
-            Route::get('/secrets/vault', [OfficeSecretsVaultController::class, 'index'])->name('officeSecretsVaultIndex');
-            Route::post('/secrets/vault', [OfficeSecretsVaultController::class, 'store'])->name('officeSecretsVaultStore');
-            Route::delete('/secrets/vault/{id}', [OfficeSecretsVaultController::class, 'destroy'])->name('officeSecretsVaultDestroy');
-            Route::post('/secrets/vault/{id}/touch', [OfficeSecretsVaultController::class, 'touch'])->name('officeSecretsVaultTouch');
-
-            // アップロードもゲートパスワード必須にする（admin id=1のセッションを奪われただけでは
-            // 書き込みもできないようにするため。閲覧だけを保護しても意味が薄い）。
-            Route::get('/secrets/upload', [OfficeSecretsUploadController::class, 'input'])->name('officeSecretsUploadInput');
-            Route::post('/secrets/upload', [OfficeSecretsUploadController::class, 'chunk'])->name('officeSecretsUploadChunk');
+            Route::get('/secrets/view/{id}', [OfficeSecretsController::class, 'view'])->name('officeSecretsView');
         });
     });
 });

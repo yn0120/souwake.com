@@ -68,13 +68,10 @@ return [
             'report' => false,
         ],
 
-        // ファイル機能：チャンク再構成・圧縮処理用の平文一時領域（tmpfsではなく通常ディスク。2GB RAM制約下で数GBの動画をメモリに載せないため）。
-        // ここには数GBの「平文」動画・画像が一時的に置かれるため、本番では必ずLUKSボリュームの内側
-        // （SECRETS_TMP_PATH=/var/encrypted/tmp）を指すこと。既定のstorage_path()はデプロイの
-        // shared/storageを指しており、そこは暗号化されていない。
+        // ファイル機能：チャンク再構成・圧縮処理用の平文一時領域（tmpfsではなく通常ディスク。2GB RAM制約下で数GBの動画をメモリに載せないため）
         'secrets_tmp' => [
             'driver' => 'local',
-            'root' => env('SECRETS_TMP_PATH', storage_path('app/private/secrets-tmp')),
+            'root' => storage_path('app/private/secrets-tmp'),
             'throw' => false,
             'report' => false,
         ],
