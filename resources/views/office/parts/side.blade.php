@@ -115,6 +115,14 @@
                 </ul>
             </li>
         @endif
+        {{-- 出欠回答管理（結婚式サイトから届いた回答） --}}
+        @if (in_array('officeWeddingRsvpIndex*', Auth::user()->routes()))
+            <li class="menu-item {{ request()->route()->named('*officeWeddingRsvp*') ? 'active' : '' }}">
+                <a href="{{ route('officeWeddingRsvpIndex', [], false) }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-envelope"></i> 出欠回答管理
+                </a>
+            </li>
+        @endif
         @if (preg_grep('/^officePasswordManager.*$/', Auth::user()->routes()))
             <li class="menu-item {{ request()->route()->named('*officePasswordManager*') ? 'active' : '' }}">
                 <a href="{{ route('officePasswordManagerIndex', [], false) }}" class="menu-link">

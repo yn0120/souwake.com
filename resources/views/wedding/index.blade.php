@@ -528,7 +528,8 @@
                 </fieldset>
 
                 <div class="pt-4 text-center">
-                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-clay-600 px-10 py-3.5 font-medium text-sand-50 shadow-md transition hover:bg-clay-700 sm:w-auto">
+                    {{-- data-rsvp-submit: 連打防止で無効化する対象（wedding.js） --}}
+                    <button type="submit" data-rsvp-submit class="inline-flex w-full items-center justify-center rounded-full bg-clay-600 px-10 py-3.5 font-medium text-sand-50 shadow-md transition hover:bg-clay-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-clay-600 sm:w-auto">
                         この内容で送信する
                     </button>
                     <p class="{{ $noteClass }} mt-4">送信後、ご入力いただいたメールアドレス宛に確認メールをお送りします。</p>

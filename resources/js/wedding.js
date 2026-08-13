@@ -126,12 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    initPhotoUploader();
+    const photoUploader = initPhotoUploader();
     const companionRows = initCompanionRows();
     initPostalCodeLookup();
     // 国の切替時にカレンダーの言語も作り直す
     initCountrySwitch((country) => initDatepickers(country));
     initFormPersistence(companionRows);
+    initSubmitGuard(photoUploader);
 });
 
 /**
@@ -219,6 +220,58 @@ function initFormPersistence(companionRows) {
     form.addEventListener('input', scheduleSave);
     form.addEventListener('change', scheduleSave);
     saveFields();
+}
+
+/**
+ * 送信ボタンの連打防止。
+ *
+ * 一度送信を始めたら以降のsubmitを止め、ボタンを無効化して「送信中…」へ差し替える。
+ * 写真はアップロード中だとphoto_tokens[]に載らないため、その間は送信そのものを止める。
+ *
+ * @param {{hasUploading: () => boolean, showError: (message: string) => void}|null} photoUploader アップローダーの状態
+ */
+function initSubmitGuard(photoUploader) {
+    const form = document.querySelector('[data-rsvp-form]');
+    const button = form?.querySelector('[data-rsvp-submit]');
+    if (!form || !button) {
+        return;
+    }
+
+    const originalLabel = button.textContent;
+    let submitting = false;
+
+    form.addEventListener('submit', (event) => {
+        if (submitting) {
+            event.preventDefault();
+
+            return;
+        }
+
+        // アップロード中の画像はまだhidden inputに載っていないため、完了を待ってもらう
+        if (photoUploader?.hasUploading()) {
+            event.preventDefault();
+            photoUploader.showError('お祝い画像のアップロード中です。完了までお待ちください。');
+
+            return;
+        }
+
+        submitting = true;
+        // 同じイベント内でdisabledにすると送信を取りやめるブラウザがあるため、次のタスクで反映する
+        window.setTimeout(() => {
+            button.disabled = true;
+            button.textContent = '送信中…';
+        }, 0);
+    });
+
+    // ブラウザバック（bfcache）で戻ったときにボタンが押せないままにならないよう元へ戻す
+    window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) {
+            return;
+        }
+        submitting = false;
+        button.disabled = false;
+        button.textContent = originalLabel;
+    });
 }
 
 /**
@@ -553,11 +606,13 @@ function initPostalCodeLookup() {
  *
  * 選択された画像はフォーム送信を待たず1枚ずつPOSTし、サーバーは一時保存してジョブを投げるだけ。
  * 縮小・圧縮が終わるまでの状態はポーリングで反映し、uuidをhidden inputとしてフォームに載せる。
+ *
+ * @return {{hasUploading: () => boolean, showError: (message: string) => void}|null}
  */
 function initPhotoUploader() {
     const root = document.querySelector('[data-photo-uploader]');
     if (!root) {
-        return;
+        return null;
     }
 
     const uploadUrl = root.dataset.uploadUrl;
@@ -889,4 +944,9 @@ function initPhotoUploader() {
 
     render();
     restore();
+
+    return {
+        hasUploading: () => photos.some((photo) => photo.status === 'uploading'),
+        showError,
+    };
 }

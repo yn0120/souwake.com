@@ -11,6 +11,7 @@ use App\Http\Controllers\Office\OfficeSecretsController;
 use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
+use App\Http\Controllers\Office\OfficeWeddingRsvpsController;
 use App\Http\Controllers\Wedding\WeddingRsvpController;
 use App\Http\Controllers\Wedding\WeddingRsvpPhotoController;
 use App\Http\Middleware\Office\CheckRoutePermission;
@@ -147,6 +148,24 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
 
             // スプレッドシートURL設定処理
             Route::post('/budget/spreadsheet', [OfficeBudgetController::class, 'spreadsheetEditExecute'])->name('officeBudgetSpreadsheetEditExecute')->setDefaults(['description' => 'スプレッドシートURL設定処理']);
+
+            // 出欠回答一覧（結婚式サイトから届いた回答）
+            Route::get('/wedding-rsvps', [OfficeWeddingRsvpsController::class, 'index'])->name('officeWeddingRsvpIndex')->setDefaults(['description' => '出欠回答一覧']);
+
+            // 出欠回答詳細
+            Route::get('/wedding-rsvps/{id}', [OfficeWeddingRsvpsController::class, 'show'])->name('officeWeddingRsvpShow')->setDefaults(['description' => '出欠回答詳細']);
+
+            // 出欠回答編集
+            Route::get('/wedding-rsvps/{id}/edit/input', [OfficeWeddingRsvpsController::class, 'editInput'])->name('officeWeddingRsvpEditInput')->setDefaults(['description' => '出欠回答編集']);
+            Route::post('/wedding-rsvps/{id}/edit/confirm', [OfficeWeddingRsvpsController::class, 'editConfirm'])->name('officeWeddingRsvpEditConfirm');
+            Route::post('/wedding-rsvps/{id}/edit/complete', [OfficeWeddingRsvpsController::class, 'editExecute'])->name('officeWeddingRsvpEditExecute');
+            Route::get('/wedding-rsvps/{id}/edit/complete', [OfficeWeddingRsvpsController::class, 'editComplete'])->name('officeWeddingRsvpEditComplete');
+
+            // 出欠回答削除（処理）
+            Route::post('/wedding-rsvps/{id}/delete', [OfficeWeddingRsvpsController::class, 'deleteExecute'])->name('officeWeddingRsvpDeleteExecute')->setDefaults(['description' => '出欠回答削除']);
+
+            // お祝い画像表示
+            Route::get('/wedding-rsvps/{id}/photos/{uuid}', [OfficeWeddingRsvpsController::class, 'photoShow'])->name('officeWeddingRsvpPhotoShow')->setDefaults(['description' => 'お祝い画像表示']);
 
             // プロフィール編集
             Route::get('/profile', [OfficeProfileController::class, 'editInput'])->name('officeProfileEditInput')->setDefaults(['description' => 'プロフィール編集']);

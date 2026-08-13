@@ -13,6 +13,12 @@ class WeddingRsvpModel extends Model
     /** ご住所の国：アメリカ */
     public const COUNTRY_US = 'US';
 
+    /** 出欠：出席 */
+    public const ATTENDANCE_ATTENDING = 'attending';
+
+    /** 出欠：欠席 */
+    public const ATTENDANCE_ABSENT = 'absent';
+
     /**
      * The table associated with the model.
      *
@@ -38,7 +44,92 @@ class WeddingRsvpModel extends Model
             'companion_flag' => 'boolean',
             'arrival_date' => 'date',
             'departure_date' => 'date',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * 指定された条件でレコードを返す
+     *
+     * @param  array  $params
+     *                         - id: int 指定されたidで絞り込み
+     *                         - ids: array 指定されたid配列で絞り込み
+     *                         - email: string 指定されたメールアドレスで絞り込み
+     *                         - attendance: string|array 指定された出欠で絞り込み
+     *                         - withDeleted: bool true=削除済も含む (デフォルトはfalse)
+     *                         - method: string 取得方法 'first', 'get', 'count' (デフォルトは'get')
+     * @return mixed
+     */
+    public static function getBy($params = [])
+    {
+        $builder = self::when(isset($params['id']) && $params['id'], function ($query) use ($params) {
+            return $query->where('id', $params['id']);
+        })
+            ->when(isset($params['ids']) && $params['ids'], function ($query) use ($params) {
+                return $query->whereIn('id', $params['ids']);
+            })
+            ->when(isset($params['email']) && $params['email'], function ($query) use ($params) {
+                return $query->where('email', $params['email']);
+            })
+            ->when(isset($params['attendance']) && $params['attendance'], function ($query) use ($params) {
+                return is_array($params['attendance'])
+                    ? $query->whereIn('attendance', $params['attendance'])
+                    : $query->where('attendance', $params['attendance']);
+            })
+            ->when(! isset($params['withDeleted']), function ($query) {
+                return $query->whereNull('deleted_at');
+            })
+            ->orderByRaw('id ASC');
+
+        if (isset($params['method']) && $params['method']) {
+            return $builder->{$params['method']}();
+        }
+
+        return $builder->get();
+    }
+
+    /**
+     * 出欠の選択肢
+     *
+     * @return array<string, string>
+     */
+    public static function attendanceOptions(): array
+    {
+        return [
+            self::ATTENDANCE_ATTENDING => 'ご出席',
+            self::ATTENDANCE_ABSENT => 'ご欠席',
+        ];
+    }
+
+    /**
+     * 当日衣装（かりゆしウェア等）のサイズの選択肢
+     *
+     * @return array<string, string>
+     */
+    public static function costumeSizeOptions(): array
+    {
+        return array_combine(
+            ['XS', 'S', 'M', 'L', 'LL', '3L'],
+            ['XS', 'S', 'M', 'L', 'LL', '3L'],
+        );
+    }
+
+    /**
+     * 出欠の表示名
+     */
+    public function attendanceLabel(): string
+    {
+        return self::attendanceOptions()[$this->attendance] ?? '未回答';
+    }
+
+    /**
+     * ご住所の国の表示名
+     */
+    public function countryLabel(): string
+    {
+        return self::countryOptions()[$this->country] ?? (string) $this->country;
     }
 
     /**
