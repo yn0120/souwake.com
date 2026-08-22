@@ -1,0 +1,80 @@
+/*
+ * 管理画面（admin / office ドメイン）のスタイル。
+ *
+ * 方針: 見た目はすべてTailwindのユーティリティクラスと、下の @theme のトークンだけで作る。
+ * このファイルに独自のCSSルール（.foo { ... }）を足さないこと。足すと、他プロジェクトへ
+ * 流用する時に「どのCSSが効いているのか」を追う作業が発生し、色を変えるだけで済まなくなる。
+ * ライブラリ内部（Plyr等）を上書きしたい場合も、CSSではなくBlade側の任意バリアント
+ * （例: [&_.plyr__controls]:bottom-6）で書く。
+ */
+@import 'tailwindcss';
+
+/* Flowbiteのセマンティックトークン（brand / success / danger / warning / body / heading /
+   default（枠線） / neutral-*（背景）など）と、フォーム要素・ツールチップのベーススタイル。
+   datepickerがJSで生成するマークアップもこのトークン名を使うため、必ず両方入れる。 */
+@import 'flowbite/src/themes/default';
+@plugin 'flowbite/plugin';
+
+/* クラスを探す場所。自動検出だけに任せると、基準ディレクトリの解釈によって
+   views配下を見に行かないことがあるため明示する（重複しても害は無い）。
+   node_modulesは自動検出の対象外なので、Flowbiteが実行時に生成するマークアップ
+   （datepicker・drawer・dropdown等）のクラスは最後の1行で拾う。
+   これが無いとカレンダーやドロワーだけスタイルの無い素のHTMLになる。 */
+@source '../views/office/**/*.blade.php';
+@source '../views/components/office/**/*.blade.php';
+@source '../js/office.js';
+@source '../js/office/**/*.js';
+@source '../../node_modules/flowbite';
+
+/*
+ * ↓↓↓ 他プロジェクトへ流用する時は、原則このブロックだけを差し替える ↓↓↓
+ *
+ * --color-brand-* はFlowbiteの上書き。ボタン・フォーカスリング・datepickerの選択色まで
+ * まとめて追従する。
+ */
+@theme {
+    --font-sans: 'Instrument Sans', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic',
+        'Meiryo', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-body: var(--font-sans);
+
+    /* ブランド色 */
+    --color-brand-softer: #f4f4ff;
+    --color-brand-soft: #e9e9ff;
+    --color-brand-medium: #cdceff;
+    --color-brand-subtle: #a9abff;
+    --color-brand-light: #8083ff;
+    --color-brand: #696cff;
+    --color-brand-strong: #5a5de0;
+
+    /* ステータス色 */
+    --color-success-soft: #eefbe5;
+    --color-success-medium: #d5f5c1;
+    --color-success: #62c72c;
+    --color-success-strong: #55ad26;
+    --color-success-subtle: #b6ea94;
+
+    --color-danger-soft: #ffece8;
+    --color-danger-medium: #ffd3ca;
+    --color-danger: #ff3e1d;
+    --color-danger-strong: #e03217;
+    --color-danger-subtle: #ffb2a3;
+
+    --color-warning-soft: #fff5e0;
+    --color-warning-medium: #ffe7b5;
+    --color-warning: #d98800;
+    --color-warning-strong: #b87400;
+    --color-warning-subtle: #ffd280;
+
+    /* Flowbiteには info が無いため追加する */
+    --color-info-soft: #e6f9fd;
+    --color-info-medium: #c0eff9;
+    --color-info: #0399b8;
+    --color-info-strong: #02809a;
+
+    /* 画面の地色とサイドメニュー（暗色） */
+    --color-page: #f5f5f9;
+    --color-sidebar: #2b2c40;
+    --color-sidebar-hover: #3a3b53;
+    --color-sidebar-fg: #c8c9de;
+    --color-sidebar-muted: #8c8fa8;
+}

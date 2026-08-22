@@ -1,68 +1,24 @@
-@extends('office/parts/app')
+{{--
+    非公開ファイルのアップロード。
 
-@push('css')
-    <link rel="stylesheet" href="/assets/vendor/libs/dropzone/dropzone.css">
-@endpush
+    Dropzone（チャンク送信）はCSSフレームワークとは独立したライブラリなので、
+    動作実績のある public/assets/vendor/libs/dropzone をそのまま使い続けている。
+--}}
+<x-office.plain-layout title="アップロード">
+    <x-slot:head>
+        <link rel="stylesheet" href="/assets/vendor/libs/dropzone/dropzone.css">
+    </x-slot:head>
 
-@section('content')
+    <form action="{{ route('officeSecretsUploadChunk', [], false) }}"
+          class="dropzone needsclick dz-clickable rounded-lg border-2 border-dashed border-default"
+          id="secrets-dropzone"></form>
 
-    <div class="container-xxl container-p-y">
-        @include ('office/parts/item/alert')
-
-        <div class="card">
-            <div class="card-body">
-                <form action="{{ route('officeSecretsUploadChunk', [], false) }}" class="dropzone needsclick dz-clickable" id="secrets-dropzone"></form>
-                <div class="mt-4 text-end">
-                    <button type="button" id="secrets-upload-submit" class="btn btn-primary">アップロード</button>
-                </div>
-            </div>
-        </div>
+    <div class="mt-4 text-right">
+        <x-office.button variant="primary" id="secrets-upload-submit">アップロード</x-office.button>
     </div>
 
-@endsection
-
-@push ('js')
-    <script src="/assets/vendor/libs/dropzone/dropzone.js"></script>
-    <script>
-        Dropzone.autoDiscover = false;
-
-        const secretsDropzone = new Dropzone('#secrets-dropzone', {
-            url: document.getElementById('secrets-dropzone').getAttribute('action'),
-            paramName: 'file',
-            acceptedFiles: 'image/*,video/*',
-            autoProcessQueue: false,
-            uploadMultiple: false,
-            parallelUploads: 1,
-            parallelChunkUploads: false,
-            chunking: true,
-            forceChunking: true,
-            chunkSize: 10 * 1024 * 1024,
-            maxFilesize: 3200, // MB
-            timeout: 0,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-        });
-
-        document.getElementById('secrets-upload-submit').addEventListener('click', function () {
-            if (secretsDropzone.getQueuedFiles().length === 0) {
-                return;
-            }
-            secretsDropzone.processQueue();
-        });
-
-        // parallelUploads:1 + autoProcessQueue:false のため、1件完了しても次のファイルへは自動で進まない。
-        // 完了のたびに残りキューがあれば再度processQueue()を呼び、複数ファイルを順番に送り切る。
-        secretsDropzone.on('complete', function () {
-            if (secretsDropzone.getQueuedFiles().length > 0) {
-                secretsDropzone.processQueue();
-            }
-        });
-
-        secretsDropzone.on('queuecomplete', function () {
-            if (secretsDropzone.files.length > 0) {
-                window.location.reload();
-            }
-        });
-    </script>
-@endpush
+    <x-slot:scripts>
+        <script src="/assets/vendor/libs/dropzone/dropzone.js"></script>
+        @vite('resources/js/office/secrets-upload.js')
+    </x-slot:scripts>
+</x-office.plain-layout>

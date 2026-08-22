@@ -6,6 +6,10 @@
  * - 入力内容・アップロード済み画像のlocalStorageへの退避と、再訪時の復元
  */
 
+// 到着日・出発日のカレンダー。日本語ロケールはDatepickerを組み立てるより先に登録する必要がある。
+import './datepicker-locale';
+import { Datepicker } from 'flowbite-datepicker';
+
 /** localStorageのキー。保存形式を変えるときはバージョンを上げる */
 const STORAGE_KEY = 'wedding:rsvp:input:v1';
 
@@ -422,43 +426,41 @@ function initCountrySwitch(onChanged) {
 }
 
 /**
- * 到着日・出発日のカレンダー（public/assets/vendor/libs/bootstrap-datepicker）。
+ * 到着日・出発日のカレンダー。入力欄をクリック/フォーカスすると開く（flowbite-datepicker）。
  *
  * 表示言語は選択中の国に合わせ、値はサーバー側の日付検証に合わせてyyyy-mm-ddで書き込む。
+ * 色・角丸はresources/css/wedding.cssの@themeで定義したトークンを使うTailwind
+ * ユーティリティクラスとして、このライブラリが直接付与している
+ * （z-indexも z-50 固定で、この招待ページの追従ヘッダー z-40 より確実に上に出る）。
  */
 function initDatepickers(country) {
-    const jquery = window.jQuery;
-    if (!jquery?.fn?.datepicker) {
-        return;
-    }
-
-    const targets = jquery('.datepicker');
+    const targets = document.querySelectorAll('.datepicker');
     if (targets.length === 0) {
         return;
     }
 
-    // 国の切替で作り直すため、既に初期化済みなら一度破棄する
-    targets.each((_, element) => {
-        if (jquery(element).data('datepicker')) {
-            jquery(element).datepicker('destroy');
+    targets.forEach((element) => {
+        // 国の切替で作り直すため、既に初期化済みなら一度破棄する
+        element.datepicker?.destroy();
+
+        new Datepicker(element, {
+            format: 'yyyy-mm-dd',
+            language: country === COUNTRY_US ? 'en' : 'ja',
+            autohide: true,
+            clearBtn: true,
+            orientation: 'bottom auto',
+            todayHighlight: true,
+        });
+
+        // カレンダーから選んだ値もlocalStorageへ退避させる（プログラムでの value 代入は
+        // change イベントを飛ばさないため）。destroy() は自前で足したリスナーまでは
+        // 外さないので、初回のみ登録する。
+        if (! element.dataset.datepickerChangeBound) {
+            element.dataset.datepickerChangeBound = '1';
+            element.addEventListener('changeDate', (event) => {
+                event.target.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         }
-    });
-
-    targets.datepicker({
-        format: 'yyyy-mm-dd',
-        language: country === COUNTRY_US ? 'en' : 'ja',
-        autoclose: true,
-        clearBtn: true,
-        orientation: 'bottom auto',
-        todayHighlight: true,
-        // カレンダーのz-indexはこのライブラリが算出して直接styleに書き込む。
-        // 追従ヘッダー（z-40）に隠れないよう、既定の10より大きい値を指定する。
-        zIndexOffset: 50,
-    });
-
-    // カレンダーから選んだ値もlocalStorageへ退避させる（jQueryのvalは変更イベントを飛ばさないため）
-    targets.off('changeDate.wedding').on('changeDate.wedding', (event) => {
-        event.target.dispatchEvent(new Event('change', { bubbles: true }));
     });
 }
 

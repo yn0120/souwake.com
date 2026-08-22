@@ -364,7 +364,7 @@
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="{{ $labelClass }}" for="arrival_date">沖縄への到着日</label>
-                            {{-- bootstrap-datepicker（public/assets/vendor/libs/bootstrap-datepicker）でカレンダーを表示する --}}
+                            {{-- flowbite-datepicker（resources/js/wedding.js）でカレンダーを表示する --}}
                             <input class="{{ $inputClass }} datepicker" type="text" id="arrival_date" name="arrival_date" placeholder="2027-03-20" autocomplete="off" value="{{ $old('arrival_date') }}">
                             @error('arrival_date') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                         </div>

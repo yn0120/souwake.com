@@ -1,101 +1,71 @@
-@extends('office/parts/app')
+<x-office.layout title="プロフィール編集">
+    <x-office.toast id="prf-alert" />
 
-@section('meta')
-    <title>プロフィール編集 | {{ config('app.name') }}</title>
-@endsection
-
-@push('css')
-    <style>
-        #prf-alert { position: fixed; top: 1rem; right: 1rem; z-index: 1080; max-width: 360px; }
-    </style>
-@endpush
-
-@section('content')
-
-    <div class="container-fluid flex-grow-1 container-p-y">
-        <div class="layout-wrapper layout-content-navbar">
-            <div class="layout-container">
-                @include ('office/parts/side')
-                <div class="layout-page">
-                    <div class="content-wrapper">
-                        <div class="container-fluid flex-grow-1 container-p-y">
-                            @include ('office/parts/item/alert')
-
-                            <div id="prf-alert" style="display:none;">
-                                <p id="prf-alert-message" class="alert p-2 text-break shadow-sm" role="alert"></p>
-                            </div>
-
-                            <div class="card p-5">
-                                <h5 class="card-title">プロフィール編集</h5>
-                                <form id="prf-form" class="mt-3" enctype="multipart/form-data">
-                                    <h6 class="mt-2">基本情報</h6>
-                                    <div class="row">
-                                        <div class="col-12 col-md-6 pt-2">
-                                            <label class="form-label" for="prf-name">氏名</label>
-                                            <input type="text" id="prf-name" name="name" class="form-control" value="{{ $assign['name'] }}" required>
-                                        </div>
-                                        <div class="col-12 col-md-6 pt-2">
-                                            <label class="form-label" for="prf-email">メールアドレス</label>
-                                            <input type="email" id="prf-email" name="email" class="form-control" value="{{ $assign['email'] }}" required>
-                                        </div>
-                                    </div>
-
-                                    <h6 class="mt-4">パスワード変更（変更する場合のみ入力）</h6>
-                                    <div class="row">
-                                        <div class="col-12 col-md-6 pt-2">
-                                            <label class="form-label" for="prf-new-password">新しいパスワード</label>
-                                            <input type="password" id="prf-new-password" name="new_password" class="form-control" autocomplete="new-password">
-                                        </div>
-                                    </div>
-
-                                    <h6 class="mt-4">Googleサービスアカウント（家計簿のスプレッドシート書き込み用）</h6>
-                                    <div class="mb-2">
-                                        現在の設定：
-                                        <span id="prf-service-account-status" class="fw-semibold">{{ $assign['serviceAccountEmail'] ?: '未設定' }}</span>
-                                    </div>
-                                    <details class="mb-3">
-                                        <summary class="text-primary" style="cursor:pointer;">JSON鍵ファイルの取得方法</summary>
-                                        <div class="text-muted small mt-2">
-                                            <ol class="ps-3 mb-2">
-                                                <li><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a>でプロジェクトを用意する</li>
-                                                <li>「APIとサービス」→「ライブラリ」から「Google Sheets API」を有効化する</li>
-                                                <li>「APIとサービス」→「認証情報」→「サービスアカウント」を作成する（ロール付与は不要）</li>
-                                                <li>作成したサービスアカウントの「キー」タブから、JSON形式で新しい鍵を作成・ダウンロードする</li>
-                                                <li>ダウンロードしたJSONファイルを下のフォームからアップロードする</li>
-                                                <li>家計簿で使うスプレッドシートを、JSON内の <code>client_email</code>（アップロード後は上記に表示されます）に<strong>編集者権限</strong>で共有する</li>
-                                            </ol>
-                                        </div>
-                                    </details>
-                                    <div class="row">
-                                        <div class="col-12 col-md-6 pt-2">
-                                            <label class="form-label" for="prf-service-account-json">JSON鍵ファイル</label>
-                                            <input type="file" id="prf-service-account-json" name="service_account_json" class="form-control" accept=".json,application/json">
-                                        </div>
-                                    </div>
-
-                                    <div class="row mt-4">
-                                        <div class="col-12 text-end">
-                                            <button type="submit" class="btn btn-success">保存する</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+    <x-office.card title="プロフィール編集">
+        <form id="prf-form" enctype="multipart/form-data">
+            <h2 class="mt-2 text-sm font-semibold text-heading">基本情報</h2>
+            <div class="mt-2 grid gap-3 md:grid-cols-2">
+                <div>
+                    <x-office.form.label for="prf-name">氏名</x-office.form.label>
+                    <x-office.form.input name="name" id="prf-name" :value="$assign['name']" required />
                 </div>
-                <div class="layout-overlay layout-menu-toggle"></div>
+                <div>
+                    <x-office.form.label for="prf-email">メールアドレス</x-office.form.label>
+                    <x-office.form.input type="email" name="email" id="prf-email" :value="$assign['email']" required />
+                </div>
             </div>
-        </div>
-    </div>
 
-@endsection
+            <h2 class="mt-6 text-sm font-semibold text-heading">パスワード変更（変更する場合のみ入力）</h2>
+            <div class="mt-2 grid gap-3 md:grid-cols-2">
+                <div>
+                    <x-office.form.label for="prf-new-password">新しいパスワード</x-office.form.label>
+                    <x-office.form.password name="new_password" id="prf-new-password" autocomplete="new-password" />
+                </div>
+            </div>
 
-@push ('js')
-    <script>
-        window.profileConfig = {
-            updateUrl: @json(route('officeProfileEditExecute', [], false)),
-            csrfToken: @json(csrf_token()),
-        };
-    </script>
-    <script src="/assets/js/profile.js"></script>
-@endpush
+            <h2 class="mt-6 text-sm font-semibold text-heading">
+                Googleサービスアカウント（家計簿のスプレッドシート書き込み用）
+            </h2>
+            <p class="mt-2 text-sm text-body">
+                現在の設定：
+                <span id="prf-service-account-status" class="font-semibold text-heading">
+                    {{ $assign['serviceAccountEmail'] ?: '未設定' }}
+                </span>
+            </p>
+
+            <details class="my-3">
+                <summary class="cursor-pointer text-sm text-brand">JSON鍵ファイルの取得方法</summary>
+                <ol class="mt-2 list-decimal space-y-1 pl-5 text-xs text-body">
+                    <li><a href="https://console.cloud.google.com/" target="_blank" rel="noopener" class="text-brand hover:underline">Google Cloud Console</a>でプロジェクトを用意する</li>
+                    <li>「APIとサービス」→「ライブラリ」から「Google Sheets API」を有効化する</li>
+                    <li>「APIとサービス」→「認証情報」→「サービスアカウント」を作成する（ロール付与は不要）</li>
+                    <li>作成したサービスアカウントの「キー」タブから、JSON形式で新しい鍵を作成・ダウンロードする</li>
+                    <li>ダウンロードしたJSONファイルを下のフォームからアップロードする</li>
+                    <li>家計簿で使うスプレッドシートを、JSON内の <code class="rounded bg-neutral-tertiary px-1">client_email</code>（アップロード後は上記に表示されます）に<strong>編集者権限</strong>で共有する</li>
+                </ol>
+            </details>
+
+            <div class="grid gap-3 md:grid-cols-2">
+                <div>
+                    <x-office.form.label for="prf-service-account-json">JSON鍵ファイル</x-office.form.label>
+                    <x-office.form.input type="file" name="service_account_json" id="prf-service-account-json"
+                                         accept=".json,application/json" class="cursor-pointer" />
+                </div>
+            </div>
+
+            <div class="mt-6 text-right">
+                <x-office.button variant="success" type="submit">保存する</x-office.button>
+            </div>
+        </form>
+    </x-office.card>
+
+    <x-slot:scripts>
+        <script>
+            window.profileConfig = {
+                updateUrl: @json(route('officeProfileEditExecute', [], false)),
+                csrfToken: @json(csrf_token()),
+            };
+        </script>
+        @vite('resources/js/office/profile.js')
+    </x-slot:scripts>
+</x-office.layout>

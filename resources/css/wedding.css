@@ -2,6 +2,10 @@
 
 @source '../views/wedding/**/*.blade.php';
 
+/* flowbite-datepicker（下記カレンダー）が実行時に生成するマークアップのクラスを拾わせる。
+   node_modulesは自動検出の対象外のため、この1行が無いとカレンダーだけ無地のHTMLになる。 */
+@source '../../node_modules/flowbite-datepicker';
+
 @theme {
     --font-sans-jp: 'Instrument Sans', 'Hiragino Sans', 'Yu Gothic', sans-serif;
     --font-serif-jp: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
@@ -38,6 +42,27 @@
             transform: translateY(0);
         }
     }
+
+    /*
+     * flowbite-datepicker（下記カレンダー）が使うセマンティックトークン。
+     *
+     * このカレンダーはFlowbiteの見た目一式（flowbite/plugin・flowbite/src/themes）を
+     * 読み込まずに使っている。読み込むとチェックボックス・ラジオ・select・textareaの
+     * 見た目が招待ページ全体で変わってしまう（Flowbiteはこれらにグローバルな既定スタイルを
+     * 当てるため）ため、カレンダーが参照するトークン名だけをアースカラーで個別に定義する。
+     */
+    --radius-base: 0.625rem;
+    --color-heading: var(--color-ink-800);
+    --color-body: var(--color-ink-700);
+    --color-neutral-primary-medium: #fff;
+    --color-neutral-secondary-medium: var(--color-sand-50);
+    --color-neutral-tertiary-medium: var(--color-sand-100);
+    --color-neutral-tertiary: var(--color-sand-200);
+    --color-default-medium: var(--color-sand-300);
+    --color-fg-disabled: var(--color-sand-300);
+    --color-brand: var(--color-moss-600);
+    --color-brand-medium: var(--color-moss-400);
+    --color-brand-strong: var(--color-moss-700);
 }
 
 body.wedding-body {
@@ -57,108 +82,20 @@ body.wedding-body {
 }
 
 /*
- * 到着日・出発日のカレンダー（bootstrap-datepicker）。
- * このライブラリは枠・背景・位置決めをBootstrapの .dropdown-menu に任せているが、
- * この招待ページはTailwindのみでBootstrap CSSを読み込まないため、必要な分だけ自前で当てる。
- * 併せて配色も招待ページのアースカラーに合わせる。
+ * 到着日・出発日のカレンダー（flowbite-datepicker）。
+ *
+ * 色・角丸・余白のほとんどは上の@themeで定義したトークンを使うTailwindユーティリティ
+ * クラスとして、JS側（flowbite-datepicker）が直接付与している。ここに書くのは、
+ * ユーティリティクラスだけでは表現できない2点だけ。
  */
-.datepicker.datepicker-dropdown {
-    position: absolute;
-    z-index: 50;
-    padding: 0.75rem;
-    border: 1px solid var(--color-sand-300);
-    border-radius: 0.75rem;
-    background-color: #fff;
-    box-shadow: 0 12px 32px rgb(42 33 25 / 0.14);
-    font-size: 0.875rem;
-    color: var(--color-ink-800);
-}
 
-.datepicker.datepicker-dropdown table {
-    margin: 0;
-    border-collapse: collapse;
-}
-
-.datepicker.datepicker-dropdown th,
-.datepicker.datepicker-dropdown td {
-    width: 2.25rem;
-    height: 2.25rem;
-    padding: 0;
-    text-align: center;
-    vertical-align: middle;
-    border-radius: 0.5rem;
-    font-weight: 400;
-}
-
-.datepicker.datepicker-dropdown th.datepicker-switch,
-.datepicker.datepicker-dropdown th.prev,
-.datepicker.datepicker-dropdown th.next {
-    width: auto;
-    font-weight: 500;
-    color: var(--color-moss-700);
-    cursor: pointer;
-}
-
-.datepicker.datepicker-dropdown th.dow {
-    font-size: 0.75rem;
-    color: var(--color-ink-700);
-    opacity: 0.7;
-}
-
-.datepicker.datepicker-dropdown td.day:hover,
-.datepicker.datepicker-dropdown th.datepicker-switch:hover,
-.datepicker.datepicker-dropdown th.prev:hover,
-.datepicker.datepicker-dropdown th.next:hover,
-.datepicker.datepicker-dropdown .month:hover,
-.datepicker.datepicker-dropdown .year:hover {
-    background-color: var(--color-sand-100);
-    cursor: pointer;
-}
-
-.datepicker.datepicker-dropdown td.old,
-.datepicker.datepicker-dropdown td.new {
-    color: var(--color-ink-700);
-    opacity: 0.4;
-}
-
-.datepicker.datepicker-dropdown td.today {
+/* 「今日」の印。既定は素のTailwindグレー（bg-gray-100 / ダーク時bg-gray-600）なので、
+   OSがダークモードの人だけ配色が浮かないよう、アースカラーで固定で上書きする。 */
+.datepicker-cell.today {
     background-color: var(--color-sand-200);
 }
 
-.datepicker.datepicker-dropdown td.active,
-.datepicker.datepicker-dropdown td.active:hover {
-    background-color: var(--color-moss-600);
-    color: var(--color-sand-50);
-}
-
-.datepicker.datepicker-dropdown .datepicker-months td,
-.datepicker.datepicker-dropdown .datepicker-years td,
-.datepicker.datepicker-dropdown .datepicker-decades td,
-.datepicker.datepicker-dropdown .datepicker-centuries td {
-    width: auto;
-    height: auto;
-}
-
-.datepicker.datepicker-dropdown .month,
-.datepicker.datepicker-dropdown .year,
-.datepicker.datepicker-dropdown .decade,
-.datepicker.datepicker-dropdown .century {
-    display: inline-block;
-    width: 3.5rem;
-    padding: 0.4rem 0;
-    border-radius: 0.5rem;
-    text-align: center;
-}
-
-.datepicker.datepicker-dropdown .month.active,
-.datepicker.datepicker-dropdown .year.active {
-    background-color: var(--color-moss-600);
-    color: var(--color-sand-50);
-}
-
-/* 「クリア」ボタン */
-.datepicker.datepicker-dropdown tfoot .clear {
-    padding-top: 0.5rem;
-    color: var(--color-clay-700);
-    cursor: pointer;
+/* 「クリア」ボタン。今日ボタンは使わない設定のため、幅半分のまま残った空白を埋める。 */
+.datepicker-footer .clear-btn {
+    width: 100%;
 }

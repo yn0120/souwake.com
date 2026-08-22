@@ -41,13 +41,6 @@
     @endif
 
     @vite(['resources/css/wedding.css', 'resources/js/wedding.js'])
-
-    {{-- 到着日・出発日のカレンダー（bootstrap-datepicker）。jQueryが前提のため先に読み込む。
-         Tailwindのリセットに負けないよう、CSSは@viteの後ろに置く。 --}}
-    <link rel="stylesheet" href="/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.css">
-    <script src="/assets/vendor/libs/jquery/jquery.js"></script>
-    <script src="/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.min.js"></script>
-    <script src="/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.ja.min.js"></script>
 </head>
 <body class="wedding-body font-sans-jp antialiased">
     @yield('content')

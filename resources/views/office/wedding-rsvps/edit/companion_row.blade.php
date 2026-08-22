@@ -13,95 +13,63 @@
 @php
     $companion = $companion ?? [];
     $rowId = "companions_{$index}";
+
+    // 入力欄のid（ラベルのforに使う）
+    $ids = [
+        'nameSei' => "{$rowId}_name_sei",
+        'kanaSei' => "{$rowId}_kana_sei",
+        'meal' => "{$rowId}_meal",
+        'childInfo' => "{$rowId}_child_info",
+    ];
+
+    // エラー表示に使うキー。姓と名は1行にまとめているため配列で渡す。
+    $errorKeys = [
+        'name' => ["companions.{$index}.name_sei", "companions.{$index}.name_mei"],
+        'kana' => ["companions.{$index}.kana_sei", "companions.{$index}.kana_mei"],
+        'meal' => "companions.{$index}.meal",
+        'childInfo' => "companions.{$index}.child_info",
+    ];
 @endphp
-<div class="card p-3 mb-3" data-companion-row>
-    <div class="row">
-        <div class="col-6 pt-1">
-            <span class="fw-bold"><span data-companion-number>{{ $number }}</span>人目の同伴者</span>
-        </div>
-        <div class="col-6 pt-1 text-end">
-            <button type="button" data-companion-remove class="btn btn-sm btn-outline-danger">削除</button>
-        </div>
+
+<div class="mb-3 rounded-lg border border-default p-3" data-companion-row>
+    <div class="flex items-center justify-between">
+        <span class="text-sm font-bold text-heading">
+            <span data-companion-number>{{ $number }}</span>人目の同伴者
+        </span>
+        <x-office.button variant="outline-danger" size="sm" data-companion-remove>削除</x-office.button>
     </div>
 
     <input type="hidden" name="companions[{{ $index }}][id]" value="{{ $companion['id'] ?? '' }}">
 
-    <div class="row">
-        <label class="col-md-3 col-form-label d-flex align-items-center pt-2 pb-0 py-md-2 fs-6 fw-bold" for="{{ $rowId }}_name_sei" role="button">
-            <span class="text-danger">※&nbsp;</span> お名前（姓・名）
-        </label>
-        <div class="col-md-8 form-text d-flex align-items-center pt-0 pb-2 py-md-2 fs-6 gap-2">
-            <input type="text" name="companions[{{ $index }}][name_sei]" value="{{ $companion['name_sei'] ?? '' }}" id="{{ $rowId }}_name_sei" class="form-control" placeholder="山田">
-            <input type="text" name="companions[{{ $index }}][name_mei]" value="{{ $companion['name_mei'] ?? '' }}" id="{{ $rowId }}_name_mei" class="form-control" placeholder="花子">
+    <x-office.form.row label="お名前（姓・名）" :for="$ids['nameSei']" required :name="$errorKeys['name']">
+        <div class="flex gap-2">
+            <x-office.form.input name="companions[{{ $index }}][name_sei]" :id="$ids['nameSei']"
+                                 :value="$companion['name_sei'] ?? ''" placeholder="山田" />
+            <x-office.form.input name="companions[{{ $index }}][name_mei]" id="{{ $rowId }}_name_mei"
+                                 :value="$companion['name_mei'] ?? ''" placeholder="花子" />
         </div>
-        @error("companions.{$index}.name_sei")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-        @error("companions.{$index}.name_mei")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-    </div>
+    </x-office.form.row>
 
-    <div class="row">
-        <label class="col-md-3 col-form-label d-flex align-items-center pt-2 pb-0 py-md-2 fs-6 fw-bold" for="{{ $rowId }}_kana_sei" role="button">
-            フリガナ（姓・名）
-        </label>
-        <div class="col-md-8 form-text d-flex align-items-center pt-0 pb-2 py-md-2 fs-6 gap-2">
-            <input type="text" name="companions[{{ $index }}][kana_sei]" value="{{ $companion['kana_sei'] ?? '' }}" id="{{ $rowId }}_kana_sei" class="form-control" placeholder="ヤマダ">
-            <input type="text" name="companions[{{ $index }}][kana_mei]" value="{{ $companion['kana_mei'] ?? '' }}" id="{{ $rowId }}_kana_mei" class="form-control" placeholder="ハナコ">
+    <x-office.form.row label="フリガナ（姓・名）" :for="$ids['kanaSei']" :name="$errorKeys['kana']">
+        <div class="flex gap-2">
+            <x-office.form.input name="companions[{{ $index }}][kana_sei]" :id="$ids['kanaSei']"
+                                 :value="$companion['kana_sei'] ?? ''" placeholder="ヤマダ" />
+            <x-office.form.input name="companions[{{ $index }}][kana_mei]" id="{{ $rowId }}_kana_mei"
+                                 :value="$companion['kana_mei'] ?? ''" placeholder="ハナコ" />
         </div>
-        @error("companions.{$index}.kana_sei")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-        @error("companions.{$index}.kana_mei")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-    </div>
+    </x-office.form.row>
 
-    <div class="row">
-        <label class="col-md-3 col-form-label d-flex align-items-center pt-2 pb-0 py-md-2 fs-6 fw-bold" for="{{ $rowId }}_meal" role="button">
-            お食事
-        </label>
-        <div class="col-md-8 form-text d-flex align-items-center pt-0 pb-2 py-md-2 fs-6">
-            <select name="companions[{{ $index }}][meal]" id="{{ $rowId }}_meal" class="form-control">
-                <option value="">未選択</option>
-                @foreach ($meals as $key => $label)
-                    <option value="{{ $key }}" @selected(($companion['meal'] ?? null) === $key)>{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
-        @error("companions.{$index}.meal")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-    </div>
+    <x-office.form.row label="お食事" :for="$ids['meal']" :name="$errorKeys['meal']">
+        <x-office.form.select name="companions[{{ $index }}][meal]" :id="$ids['meal']">
+            <option value="">未選択</option>
+            @foreach ($meals as $key => $label)
+                <option value="{{ $key }}" @selected(($companion['meal'] ?? null) === $key)>{{ $label }}</option>
+            @endforeach
+        </x-office.form.select>
+    </x-office.form.row>
 
-    <div class="row">
-        <label class="col-md-3 col-form-label d-flex align-items-center pt-2 pb-0 py-md-2 fs-6 fw-bold" for="{{ $rowId }}_child_info" role="button">
-            お子様連れの場合の追加情報
-        </label>
-        <div class="col-md-8 form-text d-flex align-items-center pt-0 pb-2 py-md-2 fs-6">
-            <textarea name="companions[{{ $index }}][child_info]" id="{{ $rowId }}_child_info" rows="2" class="form-control" placeholder="例：2歳児1名、ベビーカー持参予定">{{ $companion['child_info'] ?? '' }}</textarea>
-        </div>
-        @error("companions.{$index}.child_info")
-            <div class="col-md-3"></div>
-            <div class="col-md-8">
-                <div class="alert alert-danger mt-0 p-1 form-text" role="alert">{{ $message }}</div>
-            </div>
-        @enderror
-    </div>
+    <x-office.form.row label="お子様連れの場合の追加情報" :for="$ids['childInfo']" :name="$errorKeys['childInfo']">
+        <x-office.form.textarea name="companions[{{ $index }}][child_info]" :id="$ids['childInfo']" rows="2"
+                                placeholder="例：2歳児1名、ベビーカー持参予定">{{ $companion['child_info'] ?? '' }}</x-office.form.textarea>
+    </x-office.form.row>
 </div>
