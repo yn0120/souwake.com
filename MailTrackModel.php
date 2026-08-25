@@ -34,30 +34,4 @@ class MailTrackModel extends Model
 
         return $token;
     }
-
-    /**
-     * 送信するメールのトラッキングレコードを作成する
-     *
-     * @param  string  $email
-     * @return static
-     */
-    public static function record($email)
-    {
-        return static::create([
-            'email' => $email,
-            'token' => static::makeUniqueToken(),
-            'sent_at' => now(),
-        ]);
-    }
-
-    /**
-     * トークンに対応するメールを開封済みにする
-     *
-     * @param  string  $token
-     * @return void
-     */
-    public static function markOpened($token)
-    {
-        static::where('token', $token)->whereNull('opened_at')->update(['opened_at' => now()]);
-    }
 }

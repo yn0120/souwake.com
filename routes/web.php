@@ -12,6 +12,7 @@ use App\Http\Controllers\Office\OfficeSecretsPasswordController;
 use App\Http\Controllers\Office\OfficeSecretsUploadController;
 use App\Http\Controllers\Office\OfficeTopController;
 use App\Http\Controllers\Office\OfficeWeddingRsvpsController;
+use App\Http\Controllers\Wedding\WeddingMailTrackController;
 use App\Http\Controllers\Wedding\WeddingRsvpController;
 use App\Http\Controllers\Wedding\WeddingRsvpPhotoController;
 use App\Http\Middleware\Office\CheckRoutePermission;
@@ -191,6 +192,9 @@ Route::domain(config('app.env_domain').'wedding.'.config('app.domain'))->group(f
     });
     Route::post('/rsvp/photos/status', [WeddingRsvpPhotoController::class, 'status'])->middleware('throttle:120,1')->name('weddingRsvpPhotoStatus');
     Route::get('/rsvp/photos/{uuid}', [WeddingRsvpPhotoController::class, 'show'])->name('weddingRsvpPhotoShow');
+
+    // お控えメールの開封トラッキング用ピクセル
+    Route::get('/mail-tracks/{token}', [WeddingMailTrackController::class, 'show'])->name('weddingMailTrackExecute');
 });
 
 // ファイル管理機能（office.souwake.com）

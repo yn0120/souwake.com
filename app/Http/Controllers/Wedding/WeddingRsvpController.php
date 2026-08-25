@@ -7,6 +7,7 @@ use App\Http\Requests\Wedding\RsvpCreateRequest;
 use App\Libraries\Utils;
 use App\Mail\Wedding\RsvpAdminMail;
 use App\Mail\Wedding\RsvpGuestMail;
+use App\Models\MailTrackModel;
 use App\Models\WeddingRsvpCompanionModel;
 use App\Models\WeddingRsvpModel;
 use App\Models\WeddingRsvpPhotoModel;
@@ -96,8 +97,10 @@ class WeddingRsvpController extends Controller
             }
             $rsvp->load(['photos', 'companions']);
 
+            $mailTrack = MailTrackModel::record($rsvp->email);
+
             $subject = '【ご回答ありがとうございました】ご出欠のお控え';
-            Mail::to($rsvp->email)->queue(new RsvpGuestMail($subject, ['assign' => ['rsvp' => $rsvp]]));
+            Mail::to($rsvp->email)->queue(new RsvpGuestMail($subject, ['assign' => ['rsvp' => $rsvp, 'trackToken' => $mailTrack->token]]));
 
             $adminEmail = config('services.wedding.admin_email') ?: config('mail.from.address');
             Mail::to($adminEmail)->queue(new RsvpAdminMail('【結婚式サイト】新しいご回答が届きました', ['assign' => ['rsvp' => $rsvp]]));

@@ -41,3 +41,4 @@
 回答内容に修正がある場合は、本メールに返信の上お知らせください。<br><br>
 
 {{ config('app.name') }}<br>
+<img src="{{ route('weddingMailTrackExecute', $assign['trackToken'], false) }}" width="1" height="1" alt="" style="display:none;">
