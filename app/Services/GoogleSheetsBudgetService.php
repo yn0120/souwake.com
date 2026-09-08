@@ -75,7 +75,7 @@ class GoogleSheetsBudgetService
         $targetRow = $startRow + count($existing);
         $previousRow = $targetRow - 1;
 
-        $row[5] = "=F{$previousRow}+D{$targetRow}-IF(OR(G{$targetRow}=\$B\$6,G{$targetRow}=\$B\$7),0,E{$targetRow})";
+        $row[5] = "=\$F{$previousRow}+\$D{$targetRow}-IF(OR(\$G{$targetRow}=\$B\$6,\$G{$targetRow}=\$B\$7),0,\$E{$targetRow})";
 
         $valueRange = new ValueRange();
         $valueRange->setValues([$row]);
