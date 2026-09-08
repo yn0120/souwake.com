@@ -59,9 +59,15 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // dbコンテナとのTLS通信用。証明書は自己署名かつ検証しない運用（docker-compose.ymlの
+            // https-portal→web間と同じ考え方。詳細は_docker/db/my.cnfのコメント参照）ため、
+            // ATTR_SSL_CAは暗号化を有効にするためだけに設定し、VERIFY_SERVER_CERTは明示的にfalseにする
+            // （array_filterはfalseを除去してしまうため、CA側だけをfilter対象にして後からmergeする）。
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', '/etc/mysql/tls/server-cert.pem'),
+            ]) + [
+                Mysql::ATTR_SSL_VERIFY_SERVER_CERT => false,
+            ] : [],
         ],
 
         'mariadb' => [
@@ -80,8 +86,10 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', '/etc/mysql/tls/server-cert.pem'),
+            ]) + [
+                Mysql::ATTR_SSL_VERIFY_SERVER_CERT => false,
+            ] : [],
         ],
 
         'pgsql' => [
@@ -153,9 +161,15 @@ return [
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
+        // schemeとcontextはredisコンテナとのTLS通信用（詳細は_docker/redis/tls配下とdocker-compose.ymlの
+        // redisサービスのコメント参照）。mysql同様、証明書は自己署名かつ検証しない運用のため
+        // verify_peer/verify_peer_nameは明示的にfalseにする。
+
         'default' => [
             'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', '127.0.0.1'),
+            'scheme' => 'tls',
+            'context' => ['stream' => ['verify_peer' => false, 'verify_peer_name' => false]],
             'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
@@ -169,6 +183,8 @@ return [
         'cache' => [
             'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', '127.0.0.1'),
+            'scheme' => 'tls',
+            'context' => ['stream' => ['verify_peer' => false, 'verify_peer_name' => false]],
             'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
