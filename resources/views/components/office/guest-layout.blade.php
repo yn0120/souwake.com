@@ -23,9 +23,8 @@
             <div class="rounded-xl bg-white p-6 shadow-sm sm:p-8">
                 {{-- ブランド --}}
                 <div class="mb-6 flex items-center justify-center gap-2 text-heading">
-                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-base font-bold text-white">
-                        {{ mb_substr(config('app.name'), 0, 1) }}
-                    </span>
+                    <img src="{{ asset('assets/img/kokopelli.jpg') }}" alt="{{ config('app.name') }}"
+                         class="size-9 shrink-0 rounded-lg bg-white object-cover">
                     <span class="text-xl font-bold">{{ config('app.name') }}</span>
                 </div>
 
