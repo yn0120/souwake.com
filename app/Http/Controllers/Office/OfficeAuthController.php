@@ -508,6 +508,47 @@ class OfficeAuthController extends Controller
     }
 
     /**
+     * アカウント切替（id=1の管理者のみ、id=2にログインし直す）
+     *
+     * @return RedirectResponse
+     */
+    public function accountSwitchExecute(Request $request)
+    {
+        if ((int) Auth::id() !== 1) {
+            return redirect()->route('officeTop')->with('error', '権限がありません。');
+        }
+
+        // 二重ログインを防ぐために一旦ログアウト
+        Auth::logout();
+        $request->session()->flush();
+
+        try {
+            DB::beginTransaction();
+
+            // ログイン
+            Auth::loginUsingId(2);
+
+            // ファイル機能の7日抹消判定に使うため、ログイン時点のアクティビティも記録する
+            DB::table('admins')->where('id', 2)->update(['last_activity_at' => Carbon::now()]);
+
+            DB::commit();
+        } catch (QueryException $e) {
+            DB::rollBack();
+            $params = implode(', ', $e->getBindings());
+            Utils::log('error', 'アカウント切替（処理） '.__METHOD__.'#'.__LINE__."\nSQL: {$e->getSql()}\nParams: {$params}\n{$e}");
+
+            return redirect()->route('officeLoginInput')->with('error', 'データベースエラーが発生しました。時間をおいて再度お試しください。');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Utils::log('error', 'アカウント切替（処理） '.__METHOD__.'#'.__LINE__." >>> {$e}");
+
+            return redirect()->route('officeLoginInput')->with('error', '予期せぬエラーが発生しました。時間をおいて再度お試しください。');
+        }
+
+        return redirect()->route('officeTop');
+    }
+
+    /**
      * ログアウト
      *
      * @return RedirectResponse

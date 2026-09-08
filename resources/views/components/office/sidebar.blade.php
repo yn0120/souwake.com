@@ -99,5 +99,10 @@
             <x-office.sidebar.link icon="user-circle" :href="route('officeProfileEditInput', [], false)"
                                    :active="request()->route()->named('*officeProfile*')">プロフィール編集</x-office.sidebar.link>
         @endif
+
+        {{-- アカウント切替（id=1の管理者のみ表示。役割・権限とは無関係のため、他項目のようなroutes()判定は行わない） --}}
+        @if ((int) Auth::id() === 1)
+            <x-office.sidebar.link icon="switch" :href="route('officeAccountSwitchExecute', [], false)">アカウント切替</x-office.sidebar.link>
+        @endif
     </ul>
 </aside>

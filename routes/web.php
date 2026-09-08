@@ -173,6 +173,9 @@ Route::domain(config('app.env_domain').'admin.'.config('app.domain'))->group(fun
             Route::post('/profile', [OfficeProfileController::class, 'editExecute'])->name('officeProfileEditExecute');
         });
 
+        // アカウント切替（id=1の管理者のみ、id=2にログインし直せる。役割・権限とは無関係のためCheckRoutePermissionの対象外）
+        Route::get('/account-switch', [OfficeAuthController::class, 'accountSwitchExecute'])->name('officeAccountSwitchExecute');
+
         // エラーページ
         Route::get('/errors/{code}', [OfficeTopController::class, 'error'])->name('officeError');
     });
