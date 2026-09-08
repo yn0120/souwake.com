@@ -14,9 +14,10 @@ class GoogleSheetsBudgetService
      * @param  string  $spreadsheetUrl
      * @param  array  $row  A列から順に並べる値の配列
      * @param  string  $credentialsBase64  管理者ごとにアップロードされたサービスアカウントJSON鍵（base64エンコード済み）
+     * @param  string  $range  追記先の列・開始行（例: 'A:E'、17行目以降のみ探させたい場合は 'A17:H'）
      * @return void
      */
-    public static function appendEntry($spreadsheetUrl, array $row, $credentialsBase64)
+    public static function appendEntry($spreadsheetUrl, array $row, $credentialsBase64, $range = 'A:E')
     {
         $spreadsheetId = self::extractSpreadsheetId($spreadsheetUrl);
         if (! $spreadsheetId) {
@@ -33,7 +34,7 @@ class GoogleSheetsBudgetService
 
         $service->spreadsheets_values->append(
             $spreadsheetId,
-            "'{$sheetTitle}'!A:E",
+            "'{$sheetTitle}'!{$range}",
             $valueRange,
             ['valueInputOption' => 'USER_ENTERED']
         );

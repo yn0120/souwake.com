@@ -40,6 +40,20 @@ class OfficeBudgetController extends Controller
     {
         $adminId = Auth::id();
 
+        $assign['spreadsheetUrl'] = DB::table('admins')->where('id', $adminId)->value('budget_spreadsheet_url');
+        $assign['today'] = now()->format('Ymd');
+
+        // admin id=2 は口座・科目ではなく、区分・利用者が固定選択肢の共有入出金台帳レイアウトを使う
+        if ((int) $adminId === 2) {
+            $assign['layout'] = 'transfer';
+            $assign['types'] = EntryCreateRequest::TRANSFER_TYPE_LABELS;
+            $assign['members'] = EntryCreateRequest::MEMBER_LABELS;
+
+            return view('office/budget/input', compact('assign'));
+        }
+
+        $assign['layout'] = 'default';
+
         $this->ensureDefaults('budget_accounts', $adminId, self::DEFAULT_ACCOUNTS);
         $this->ensureDefaults('budget_categories', $adminId, self::DEFAULT_CATEGORIES);
 
@@ -50,8 +64,6 @@ class OfficeBudgetController extends Controller
         $assign['categories'] = $categories;
         $assign['defaultAccountId'] = $accounts[0]['id'] ?? null;
         $assign['defaultCategoryId'] = $categories[0]['id'] ?? null;
-        $assign['spreadsheetUrl'] = DB::table('admins')->where('id', $adminId)->value('budget_spreadsheet_url');
-        $assign['today'] = now()->format('Ymd');
 
         return view('office/budget/input', compact('assign'));
     }
@@ -114,17 +126,35 @@ class OfficeBudgetController extends Controller
             return response()->json(['message' => 'Googleサービスアカウントが設定されていません。プロフィール編集から設定してください。'], 422);
         }
 
-        $accountName = DB::table('budget_accounts')->where('id', $input['account_id'])->where('admin_id', $adminId)->value('name');
-        $categoryName = DB::table('budget_categories')->where('id', $input['category_id'])->where('admin_id', $adminId)->value('name');
+        // admin id=2 は共有の入出金台帳として、別項目・17行目以降の範囲へ書き込む
+        if ((int) $adminId === 2) {
+            $row = [
+                Carbon::createFromFormat('Ymd', $input['occurred_on'])->format('Y/m/d'),
+                EntryCreateRequest::TRANSFER_TYPE_LABELS[$input['type']],
+                $input['content'],
+                $input['deposit_amount'] ?? '',
+                $input['withdrawal_amount'] ?? '',
+                $input['balance'] ?? '',
+                EntryCreateRequest::MEMBER_LABELS[$input['member']],
+                $input['memo'] ?? '',
+            ];
+            $range = 'A17:H';
+        } else {
+            $accountName = DB::table('budget_accounts')->where('id', $input['account_id'])->where('admin_id', $adminId)->value('name');
+            $categoryName = DB::table('budget_categories')->where('id', $input['category_id'])->where('admin_id', $adminId)->value('name');
 
-        try {
-            GoogleSheetsBudgetService::appendEntry($admin->budget_spreadsheet_url, [
+            $row = [
                 Carbon::createFromFormat('Ymd', $input['occurred_on'])->format('Y/m/d'),
                 $input['amount'],
                 $accountName,
                 $categoryName,
                 $input['memo'] ?? '',
-            ], $admin->google_service_account_json_base64);
+            ];
+            $range = 'A:E';
+        }
+
+        try {
+            GoogleSheetsBudgetService::appendEntry($admin->budget_spreadsheet_url, $row, $admin->google_service_account_json_base64, $range);
         } catch (\Throwable $e) {
             Utils::log('error', '家計簿登録（処理） '.__METHOD__.'#'.__LINE__." >>> {$e}");
 

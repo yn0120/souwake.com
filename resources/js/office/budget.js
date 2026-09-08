@@ -4,13 +4,11 @@ import { createToast } from './toast';
     'use strict';
 
     var config = window.budgetConfig || {};
+    var isTransfer = config.layout === 'transfer';
     var showAlert = createToast('bdg-alert', 'bdg-alert-message');
 
     var entryForm = document.getElementById('bdg-entry-form');
     var occurredOnInput = document.getElementById('bdg-occurred-on');
-    var amountInput = document.getElementById('bdg-amount');
-    var accountSelect = document.getElementById('bdg-account');
-    var categorySelect = document.getElementById('bdg-category');
     var memoInput = document.getElementById('bdg-memo');
 
     var spreadsheetForm = document.getElementById('bdg-spreadsheet-form');
@@ -37,15 +35,100 @@ import { createToast } from './toast';
         });
     }
 
+    function digitsOnly(input) {
+        input.addEventListener('input', function () {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        });
+    }
+
     // --- 数値限定入力 ---
 
     occurredOnInput.addEventListener('input', function () {
         occurredOnInput.value = occurredOnInput.value.replace(/[^0-9]/g, '').slice(0, 8);
     });
 
-    amountInput.addEventListener('input', function () {
-        amountInput.value = amountInput.value.replace(/[^0-9]/g, '');
+    // --- スプレッドシートURL設定 ---
+
+    spreadsheetForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        apiFetch(config.spreadsheetUpdateUrl, {
+            method: 'POST',
+            body: JSON.stringify({url: spreadsheetUrlInput.value.trim()}),
+        }).then(function (result) {
+            if (!result.ok) {
+                showAlert('danger', (result.data && result.data.message) || '保存に失敗しました。');
+
+                return;
+            }
+            showAlert('success', '保存しました。');
+        });
     });
+
+    // --- 共有の入出金台帳レイアウト（admin id=2） ---
+
+    if (isTransfer) {
+        var typeSelect = document.getElementById('bdg-type');
+        var contentInput = document.getElementById('bdg-content');
+        var depositInput = document.getElementById('bdg-deposit');
+        var withdrawalInput = document.getElementById('bdg-withdrawal');
+        var balanceInput = document.getElementById('bdg-balance');
+        var memberSelect = document.getElementById('bdg-member');
+
+        digitsOnly(depositInput);
+        digitsOnly(withdrawalInput);
+        digitsOnly(balanceInput);
+
+        var resetTransferForm = function () {
+            occurredOnInput.value = config.today;
+            typeSelect.selectedIndex = 0;
+            contentInput.value = '';
+            depositInput.value = '';
+            withdrawalInput.value = '';
+            balanceInput.value = '';
+            memberSelect.selectedIndex = 0;
+            memoInput.value = '';
+        };
+
+        resetTransferForm();
+
+        entryForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            apiFetch(config.submitUrl, {
+                method: 'POST',
+                body: JSON.stringify({
+                    occurred_on: occurredOnInput.value,
+                    type: typeSelect.value,
+                    content: contentInput.value.trim(),
+                    deposit_amount: depositInput.value,
+                    withdrawal_amount: withdrawalInput.value,
+                    balance: balanceInput.value,
+                    member: memberSelect.value,
+                    memo: memoInput.value.trim(),
+                }),
+            }).then(function (result) {
+                if (!result.ok) {
+                    showAlert('danger', (result.data && result.data.message) || '登録に失敗しました。');
+
+                    return;
+                }
+                showAlert('success', '保存しました。');
+                resetTransferForm();
+                occurredOnInput.focus();
+            });
+        });
+
+        return;
+    }
+
+    // --- 通常の家計簿レイアウト ---
+
+    var amountInput = document.getElementById('bdg-amount');
+    var accountSelect = document.getElementById('bdg-account');
+    var categorySelect = document.getElementById('bdg-category');
+
+    digitsOnly(amountInput);
 
     // --- プルダウンの「＋ 追加」選択肢 ---
 
@@ -95,24 +178,6 @@ import { createToast } from './toast';
 
     bindAddOption(accountSelect, config.accountCreateUrl);
     bindAddOption(categorySelect, config.categoryCreateUrl);
-
-    // --- スプレッドシートURL設定 ---
-
-    spreadsheetForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        apiFetch(config.spreadsheetUpdateUrl, {
-            method: 'POST',
-            body: JSON.stringify({url: spreadsheetUrlInput.value.trim()}),
-        }).then(function (result) {
-            if (!result.ok) {
-                showAlert('danger', (result.data && result.data.message) || '保存に失敗しました。');
-
-                return;
-            }
-            showAlert('success', '保存しました。');
-        });
-    });
 
     // --- 入力値をデフォルトへリセット ---
 
