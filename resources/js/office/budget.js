@@ -72,12 +72,10 @@ import { createToast } from './toast';
         var contentInput = document.getElementById('bdg-content');
         var depositInput = document.getElementById('bdg-deposit');
         var withdrawalInput = document.getElementById('bdg-withdrawal');
-        var balanceInput = document.getElementById('bdg-balance');
         var memberSelect = document.getElementById('bdg-member');
 
         digitsOnly(depositInput);
         digitsOnly(withdrawalInput);
-        digitsOnly(balanceInput);
 
         var resetTransferForm = function () {
             occurredOnInput.value = config.today;
@@ -85,7 +83,6 @@ import { createToast } from './toast';
             contentInput.value = '';
             depositInput.value = '';
             withdrawalInput.value = '';
-            balanceInput.value = '';
             memberSelect.selectedIndex = 0;
             memoInput.value = '';
         };
@@ -103,7 +100,6 @@ import { createToast } from './toast';
                     content: contentInput.value.trim(),
                     deposit_amount: depositInput.value,
                     withdrawal_amount: withdrawalInput.value,
-                    balance: balanceInput.value,
                     member: memberSelect.value,
                     memo: memoInput.value.trim(),
                 }),

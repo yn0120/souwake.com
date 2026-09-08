@@ -59,11 +59,6 @@
                                              inputmode="numeric" placeholder="9999" autocomplete="off" />
                     </div>
                     <div>
-                        <x-office.form.label for="bdg-balance">残高</x-office.form.label>
-                        <x-office.form.input type="tel" name="balance" id="bdg-balance"
-                                             inputmode="numeric" placeholder="9999" autocomplete="off" />
-                    </div>
-                    <div>
                         <x-office.form.label for="bdg-member">利用者</x-office.form.label>
                         <x-office.form.select name="member" id="bdg-member" required>
                             @foreach ($assign['members'] as $value => $label)

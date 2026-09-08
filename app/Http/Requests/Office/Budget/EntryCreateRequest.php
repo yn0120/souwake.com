@@ -12,8 +12,8 @@ class EntryCreateRequest extends FormRequest
      * 共有の入出金台帳レイアウト（admin id=2）専用の「区分」選択肢
      */
     public const TRANSFER_TYPE_LABELS = [
-        'charge' => 'チャージ',
         'expense' => '支出',
+        'charge' => 'チャージ',
         'settle' => '清算',
     ];
 
@@ -71,12 +71,6 @@ class EntryCreateRequest extends FormRequest
                 ],
 
                 'withdrawal_amount' => [
-                    'bail',
-                    'nullable',
-                    'integer',
-                ],
-
-                'balance' => [
                     'bail',
                     'nullable',
                     'integer',
