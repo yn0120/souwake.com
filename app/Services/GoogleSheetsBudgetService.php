@@ -4,6 +4,12 @@ namespace App\Services;
 
 use Google\Client;
 use Google\Service\Sheets;
+use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
+use Google\Service\Sheets\CellData;
+use Google\Service\Sheets\CellFormat;
+use Google\Service\Sheets\GridRange;
+use Google\Service\Sheets\Request as SheetsRequest;
+use Google\Service\Sheets\RepeatCellRequest;
 use Google\Service\Sheets\ValueRange;
 
 class GoogleSheetsBudgetService
@@ -44,6 +50,7 @@ class GoogleSheetsBudgetService
      * $startRow行目以降で最初に空いている行へ書き込む。
      * 残高（F列, $row のインデックス5）は渡された値を無視し、直前行の残高を参照する数式で上書きする
      * （例: 99行目なら =F98+D99-IF(OR(G99=$B$6,G99=$B$7),0,E99)）。
+     * また、区分（B列）・利用者（G列）は中央寄せで書き込む。
      *
      * @param  string  $spreadsheetUrl
      * @param  array  $row  A列から順に並べる8要素の配列（F列は数式で上書きされるため何を渡しても良い）
@@ -59,7 +66,9 @@ class GoogleSheetsBudgetService
         }
 
         $service = new Sheets(self::makeClient($credentialsBase64));
-        $sheetTitle = $service->spreadsheets->get($spreadsheetId)->getSheets()[0]->getProperties()->getTitle();
+        $sheetProperties = $service->spreadsheets->get($spreadsheetId)->getSheets()[0]->getProperties();
+        $sheetId = $sheetProperties->getSheetId();
+        $sheetTitle = $sheetProperties->getTitle();
 
         // A列を$startRow行目以降で読み、最初に空いている行を探す
         $existing = $service->spreadsheets_values->get($spreadsheetId, "'{$sheetTitle}'!A{$startRow}:A")->getValues() ?? [];
@@ -77,6 +86,42 @@ class GoogleSheetsBudgetService
             $valueRange,
             ['valueInputOption' => 'USER_ENTERED']
         );
+
+        self::centerAlignColumns($service, $spreadsheetId, $sheetId, $targetRow, [1, 6]);
+    }
+
+    /**
+     * 指定した行の指定列（0始まり）を中央寄せにする
+     *
+     * @param  Sheets  $service
+     * @param  string  $spreadsheetId
+     * @param  int  $sheetId
+     * @param  int  $row
+     * @param  array  $columnIndexes
+     * @return void
+     */
+    private static function centerAlignColumns(Sheets $service, $spreadsheetId, $sheetId, $row, array $columnIndexes)
+    {
+        $requests = [];
+        foreach ($columnIndexes as $columnIndex) {
+            $requests[] = new SheetsRequest([
+                'repeatCell' => new RepeatCellRequest([
+                    'range' => new GridRange([
+                        'sheetId' => $sheetId,
+                        'startRowIndex' => $row - 1,
+                        'endRowIndex' => $row,
+                        'startColumnIndex' => $columnIndex,
+                        'endColumnIndex' => $columnIndex + 1,
+                    ]),
+                    'cell' => new CellData([
+                        'userEnteredFormat' => new CellFormat(['horizontalAlignment' => 'CENTER']),
+                    ]),
+                    'fields' => 'userEnteredFormat.horizontalAlignment',
+                ]),
+            ]);
+        }
+
+        $service->spreadsheets->batchUpdate($spreadsheetId, new BatchUpdateSpreadsheetRequest(['requests' => $requests]));
     }
 
     /**
