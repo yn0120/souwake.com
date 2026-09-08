@@ -141,7 +141,7 @@ import { BUTTON_CLASS, INPUT_CLASS } from './ui';
         var itemsHtml = entry.items.map(function (item) { return renderItemRow(entry.id, item); }).join('');
 
         return ''
-            + '<div class="mb-3 rounded-lg border border-default p-3" data-id="' + entry.id + '">'
+            + '<div class="mb-3 rounded-lg border border-default p-3 pwm-entry-card" data-id="' + entry.id + '">'
             + '  <div class="flex flex-wrap items-start justify-between">'
             + '    <div class="pwm-entry-view">'
             + '      <div class="text-base font-bold text-heading pwm-entry-name">' + esc(entry.name) + '</div>'
@@ -186,7 +186,7 @@ import { BUTTON_CLASS, INPUT_CLASS } from './ui';
         var valueInput = buildValueFieldHtml(item.type, item.value, 'pwm-item-value-input');
 
         return ''
-            + '<div class="border-t border-dashed border-default py-2 first:border-t-0" data-item-id="' + item.id + '" data-entry-id="' + entryId + '">'
+            + '<div class="border-t border-dashed border-default py-2 first:border-t-0 pwm-item-row" data-item-id="' + item.id + '" data-entry-id="' + entryId + '">'
             + '  <div class="grid grid-cols-12 items-center gap-2 pwm-item-view">'
             + '    <div class="col-span-12 md:col-span-3"><span class="text-sm font-semibold text-heading">' + esc(item.label) + '</span></div>'
             + '    <div class="col-span-12 md:col-span-6">' + renderItemValueView(item) + '</div>'
