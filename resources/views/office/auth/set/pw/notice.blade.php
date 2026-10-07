@@ -5,7 +5,7 @@
 パスワードの変更が完了しました。<br>
 ※パスワードはログイン時に必要になるため、ご自身で大切に管理していただくようお願いいたします。<br><br>
 
-スキャンテストポータルURL：<br>
+URL：<br>
 → <a href="{{ route('officeTop', [], false) }}" target="_blank">{{ route('officeTop') }}</a><br><br><br>
 
 
