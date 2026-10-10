@@ -274,7 +274,7 @@
                                 <label class="relative cursor-pointer">
                                     <input type="radio" name="country" value="{{ $value }}" class="peer sr-only" {{ $selectedCountry === $value ? 'checked' : '' }} data-country-option>
                                     <span class="block rounded-xl border border-sand-300 bg-white/60 px-4 py-3 text-center font-medium text-ink-700 transition peer-checked:border-moss-600 peer-checked:bg-moss-600 peer-checked:text-sand-50">
-                                        {{ $label }}
+                                        {!! str_replace(' / ', '<br>', e($label)) !!}
                                     </span>
                                 </label>
                             @endforeach
