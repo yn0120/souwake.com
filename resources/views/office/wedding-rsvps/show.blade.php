@@ -30,7 +30,7 @@
                 {{ optional($record->departure_date)->format('Y年m月d日') ?: '未定' }}
             </x-office.detail-row>
             <x-office.detail-row label="宿泊先ホテル名">{{ $record->hotel_name ?: '未定' }}</x-office.detail-row>
-            <x-office.detail-row label="当日衣装のサイズ">{{ $record->costume_size ?: '選択なし' }}</x-office.detail-row>
+            <x-office.detail-row label="かりゆしウェア受取場所">{!! $record->kariyushiPickupLocationLabel() !!}</x-office.detail-row>
         @endif
 
         <x-office.detail-row label="同伴者">

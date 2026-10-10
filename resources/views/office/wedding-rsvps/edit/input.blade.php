@@ -12,7 +12,7 @@
             @csrf
 
             <x-office.form.row label="出欠" for="attendance" required name="attendance"
-                               help="ご欠席に変更した場合、当日のご予定（アレルギー・到着日・出発日・宿泊先・衣装サイズ）は保存されません。">
+                               help="ご欠席に変更した場合、当日のご予定（アレルギー・到着日・出発日・宿泊先・かりゆしウェア受取場所）は保存されません。">
                 <x-office.form.select name="attendance" id="attendance">
                     <option value="">未選択</option>
                     @foreach ($assign['attendances'] as $key => $label)
@@ -115,13 +115,14 @@
                 <x-office.form.input name="hotel_name" id="hotel_name" :value="old('hotel_name', $record->hotel_name)" />
             </x-office.form.row>
 
-            <x-office.form.row label="当日衣装のサイズ" for="costume_size" name="costume_size">
-                <x-office.form.select name="costume_size" id="costume_size">
-                    <option value="">未選択</option>
-                    @foreach ($assign['costumeSizes'] as $key => $label)
-                        <option value="{{ $key }}" @selected($key === old('costume_size', $record->costume_size))>{{ $label }}</option>
+            <x-office.form.row label="かりゆしウェア受取場所" name="kariyushi_pickup_location">
+                <div class="flex flex-wrap gap-x-6 gap-y-2">
+                    @foreach ($assign['kariyushiPickupLocations'] as $key => $label)
+                        <x-office.form.check type="radio" name="kariyushi_pickup_location" value="{{ $key }}"
+                                             id="kariyushi_pickup_location_{{ $key }}"
+                                             :checked="$key === old('kariyushi_pickup_location', $record->kariyushi_pickup_location)">{!! $label !!}</x-office.form.check>
                     @endforeach
-                </x-office.form.select>
+                </div>
             </x-office.form.row>
 
             <x-office.form.row label="同伴者の有無" required name="companion_flag">

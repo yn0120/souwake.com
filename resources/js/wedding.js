@@ -136,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPostalCodeLookup();
     // 国の切替時にカレンダーの言語も作り直す
     initCountrySwitch((country) => initDatepickers(country));
+    initKariyushiPickupSwitch();
     initFormPersistence(companionRows);
     initSubmitGuard(photoUploader);
 });
@@ -485,12 +486,27 @@ function initCountrySwitch(onChanged) {
             element.placeholder = isUs ? element.dataset.placeholderUs : element.dataset.placeholderJp;
         });
 
-        const postalNote = document.querySelector('[data-postal-note]');
-        if (postalNote) {
-            postalNote.textContent = isUs ? postalNote.dataset.noteUs : postalNote.dataset.noteJp;
-        }
-
         onChanged?.(country);
+    };
+
+    options.forEach((option) => option.addEventListener('change', apply));
+    apply();
+}
+
+/**
+ * かりゆしウェア受取場所の選択に応じて、該当する地図（埋め込みiframe）だけを表示する。
+ */
+function initKariyushiPickupSwitch() {
+    const options = document.querySelectorAll('[data-kariyushi-option]');
+    if (options.length === 0) {
+        return;
+    }
+
+    const apply = () => {
+        const selected = document.querySelector('[data-kariyushi-option]:checked')?.value ?? '';
+        document.querySelectorAll('[data-kariyushi-map]').forEach((element) => {
+            element.classList.toggle('hidden', element.dataset.kariyushiMap !== selected);
+        });
     };
 
     options.forEach((option) => option.addEventListener('change', apply));

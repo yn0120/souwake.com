@@ -72,10 +72,10 @@ class EditRequest extends FormRequest
             'arrival_date' => ['bail', 'nullable', 'date', 'date_format:Y/m/d'],
             'departure_date' => ['bail', 'nullable', 'date', 'date_format:Y/m/d'],
             'hotel_name' => ['bail', 'nullable', 'max:255'],
-            'costume_size' => [
+            'kariyushi_pickup_location' => [
                 'bail',
                 'nullable',
-                Rule::in(array_keys(WeddingRsvpModel::costumeSizeOptions())),
+                Rule::in(array_keys(WeddingRsvpModel::kariyushiPickupLocationOptions())),
             ],
 
             // 同伴者は連名（複数）で受け取る。「同伴者なし」を選んだ場合は行が送られてきても丸ごと無視する。
@@ -162,7 +162,7 @@ class EditRequest extends FormRequest
             'arrival_date' => '沖縄への到着日',
             'departure_date' => '沖縄からの出発日',
             'hotel_name' => '宿泊先ホテル名',
-            'costume_size' => '当日衣装のサイズ',
+            'kariyushi_pickup_location' => 'かりゆしウェア受取場所',
             'companion_flag' => '同伴者の有無',
             'companions' => '同伴者',
             'message' => '新郎新婦へのメッセージ',

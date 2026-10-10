@@ -26,7 +26,7 @@
             <x-office.detail-row label="沖縄への到着日">{{ ($confirm['arrival_date'] ?? null) ?: '未定' }}</x-office.detail-row>
             <x-office.detail-row label="沖縄からの出発日">{{ ($confirm['departure_date'] ?? null) ?: '未定' }}</x-office.detail-row>
             <x-office.detail-row label="宿泊先ホテル名">{{ ($confirm['hotel_name'] ?? null) ?: '未定' }}</x-office.detail-row>
-            <x-office.detail-row label="当日衣装のサイズ">{{ ($confirm['costume_size'] ?? null) ?: '選択なし' }}</x-office.detail-row>
+            <x-office.detail-row label="かりゆしウェア受取場所">{!! ($confirm['kariyushi_pickup_location'] ?? null) ?: '選択なし' !!}</x-office.detail-row>
             <x-office.detail-row label="同伴者の有無">{{ $confirm['companion_flag'] ?? null }}</x-office.detail-row>
 
             @foreach ($assign['confirmCompanions'] as $companion)

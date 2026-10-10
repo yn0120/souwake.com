@@ -19,6 +19,12 @@ class WeddingRsvpModel extends Model
     /** 出欠：欠席 */
     public const ATTENDANCE_ABSENT = 'absent';
 
+    /** かりゆしウェア受取場所：Hillside Grill Restaurant（挙式前日） */
+    public const KARIYUSHI_PICKUP_RESTAURANT = 'restaurant';
+
+    /** かりゆしウェア受取場所：会場（挙式当日） */
+    public const KARIYUSHI_PICKUP_VENUE = 'venue';
+
     /**
      * The table associated with the model.
      *
@@ -104,16 +110,24 @@ class WeddingRsvpModel extends Model
     }
 
     /**
-     * 当日衣装（かりゆしウェア等）のサイズの選択肢
+     * かりゆしウェア受取場所の選択肢
      *
      * @return array<string, string>
      */
-    public static function costumeSizeOptions(): array
+    public static function kariyushiPickupLocationOptions(): array
     {
-        return array_combine(
-            ['XS', 'S', 'M', 'L', 'LL', '3L'],
-            ['XS', 'S', 'M', 'L', 'LL', '3L'],
-        );
+        return [
+            self::KARIYUSHI_PICKUP_RESTAURANT => 'Hillside Grill Restaurant<br>2027年3月20日',
+            self::KARIYUSHI_PICKUP_VENUE => '会場<br>2027年3月21日',
+        ];
+    }
+
+    /**
+     * かりゆしウェア受取場所の表示名
+     */
+    public function kariyushiPickupLocationLabel(): string
+    {
+        return self::kariyushiPickupLocationOptions()[$this->kariyushi_pickup_location] ?? '選択なし';
     }
 
     /**

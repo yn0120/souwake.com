@@ -15,7 +15,7 @@
 到着日：{{ optional($assign['rsvp']->arrival_date)->format('Y年m月d日') ?: '未定' }}<br>
 出発日：{{ optional($assign['rsvp']->departure_date)->format('Y年m月d日') ?: '未定' }}<br>
 宿泊先ホテル：{{ $assign['rsvp']->hotel_name ?: '未定' }}<br>
-衣装サイズ：{{ $assign['rsvp']->costume_size ?: '選択なし' }}<br>
+かりゆしウェア受取場所：{!! $assign['rsvp']->kariyushiPickupLocationLabel() !!}<br>
 同伴者：{{ $assign['rsvp']->companions->isEmpty() ? 'なし' : 'あり（'.$assign['rsvp']->companions->count().'名）' }}<br>
 @foreach ($assign['rsvp']->companions as $companion)
     ―――――<br>

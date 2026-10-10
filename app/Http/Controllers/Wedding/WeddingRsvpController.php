@@ -68,7 +68,7 @@ class WeddingRsvpController extends Controller
             $input['arrival_date'] = null;
             $input['departure_date'] = null;
             $input['hotel_name'] = null;
-            $input['costume_size'] = null;
+            $input['kariyushi_pickup_location'] = null;
         }
 
         try {

@@ -67,7 +67,7 @@ class RsvpCreateRequest extends FormRequest
             'arrival_date' => ['bail', 'nullable', 'date'],
             'departure_date' => ['bail', 'nullable', 'date'],
             'hotel_name' => ['bail', 'nullable', 'max:255'],
-            'costume_size' => ['bail', 'nullable', Rule::in(['XS', 'S', 'M', 'L', 'LL', '3L'])],
+            'kariyushi_pickup_location' => ['bail', 'nullable', Rule::in(array_keys(WeddingRsvpModel::kariyushiPickupLocationOptions()))],
 
             // 同伴者は連名（複数）で受け取る。「同伴者なし」を選んだ場合は行が送られてきても丸ごと無視する。
             'companion_flag' => ['bail', 'required', Rule::in(['1', '0'])],

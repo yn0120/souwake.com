@@ -295,9 +295,6 @@
                                     data-postal-code
                                     data-placeholder-jp="9000001"
                                     data-placeholder-us="90210 (ZIP Code)">
-                                <p class="{{ $noteClass }}" data-postal-note
-                                    data-note-jp="ハイフンなしの数字7桁でご入力いただくと、住所が自動で入力されます。"
-                                    data-note-us="Enter your 5-digit ZIP code and your state and city will be filled in automatically."></p>
                                 <p class="{{ $errorClass }} hidden" data-postal-message></p>
                                 @error('postal_code') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                             </div>
@@ -387,15 +384,37 @@
                         @error('hotel_name') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
 
-                    <div>
-                        <label class="{{ $labelClass }}" for="costume_size">当日の衣装（かりゆしウェア等）のサイズ</label>
-                        <select class="{{ $inputClass }}" id="costume_size" name="costume_size">
-                            <option value="">選択しない</option>
-                            @foreach (['XS', 'S', 'M', 'L', 'LL', '3L'] as $size)
-                                <option value="{{ $size }}" @selected($old('costume_size') === $size)>{{ $size }}</option>
+                    {{-- かりゆしウェアの受取場所。選択に応じて地図を出し分ける（wedding.js） --}}
+                    <div data-kariyushi-switch>
+                        <span class="{{ $labelClass }}">かりゆしウェア受取場所</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            @foreach (App\Models\WeddingRsvpModel::kariyushiPickupLocationOptions() as $value => $label)
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="kariyushi_pickup_location" value="{{ $value }}" class="peer sr-only" {{ $old('kariyushi_pickup_location') === $value ? 'checked' : '' }} data-kariyushi-option>
+                                    <span class="block rounded-xl border border-sand-300 bg-white/60 px-4 py-3 text-center font-medium text-ink-700 transition peer-checked:border-moss-600 peer-checked:bg-moss-600 peer-checked:text-sand-50">
+                                        {!! $label !!}
+                                    </span>
+                                </label>
                             @endforeach
-                        </select>
-                        @error('costume_size') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+                        </div>
+                        <p class="{{ $noteClass }} mt-3">
+                            挙式前日にかりゆしウェアを受け取れる方は18時以降にレストランへお越しください。<br>レストランへお越しいただくことが難しい場合、挙式当日にお渡しいたします。
+                        </p>
+                        @error('kariyushi_pickup_location') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
+
+                        <div class="mt-4 hidden" data-kariyushi-map="restaurant">
+                            <p class="text-sm text-ink-700"><a href="https://maps.app.goo.gl/yRshA3Qb6bcFdKKZ8" target="_blank">https://maps.app.goo.gl/yRshA3Qb6bcFdKKZ8</a></p>
+                            <div class="mt-2 overflow-hidden rounded-xl border border-sand-200">
+                                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d451171.0900261541!2d127.46954612132511!3d26.500713273867387!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x34e51b180d513b07%3A0xe9b17c44f70c2f40!2sHillside%20Grill%20Restaurant!5e1!3m2!1sja!2sjp!4v1791606096450!5m2!1sja!2sjp" width="600" height="450" style="border:0;" class="w-full" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 hidden" data-kariyushi-map="venue">
+                            <p class="text-sm text-ink-700"><a href="https://maps.app.goo.gl/W8erN6Ub6yNodtoc8" target="_blank">https://maps.app.goo.gl/W8erN6Ub6yNodtoc8</a></p>
+                            <div class="mt-2 overflow-hidden rounded-xl border border-sand-200">
+                                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d451171.0900261541!2d127.81824688243078!3d26.434502329369234!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x34e500b0103496c7%3A0x1cae532607091d3f!2z44K244O744Ku44OO44K244Oq44K-44O844OIIOe-juOCieOBruaVmeS8mg!5e1!3m2!1sja!2sjp!4v1791605003828!5m2!1sja!2sjp" width="600" height="450" style="border:0;" class="w-full" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
 

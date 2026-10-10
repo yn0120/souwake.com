@@ -144,7 +144,7 @@ class OfficeWeddingRsvpsController extends Controller
         $assign['attendances'] = WeddingRsvpModel::attendanceOptions();
         $assign['countries'] = WeddingRsvpModel::countryOptions();
         $assign['states'] = WeddingRsvpModel::usStates();
-        $assign['costumeSizes'] = WeddingRsvpModel::costumeSizeOptions();
+        $assign['kariyushiPickupLocations'] = WeddingRsvpModel::kariyushiPickupLocationOptions();
         $assign['meals'] = WeddingRsvpCompanionModel::mealOptions();
 
         // 同伴者の初期値（old()があればそれを優先）
@@ -171,7 +171,7 @@ class OfficeWeddingRsvpsController extends Controller
         // 各種選択肢
         $assign['attendances'] = WeddingRsvpModel::attendanceOptions();
         $assign['countries'] = WeddingRsvpModel::countryOptions();
-        $assign['costumeSizes'] = WeddingRsvpModel::costumeSizeOptions();
+        $assign['kariyushiPickupLocations'] = WeddingRsvpModel::kariyushiPickupLocationOptions();
         $assign['meals'] = WeddingRsvpCompanionModel::mealOptions();
 
         // 同伴者は別テーブルへ保存するため、回答本体の入力値から切り離す
@@ -189,7 +189,7 @@ class OfficeWeddingRsvpsController extends Controller
             $input['arrival_date'] = null;
             $input['departure_date'] = null;
             $input['hotel_name'] = null;
-            $input['costume_size'] = null;
+            $input['kariyushi_pickup_location'] = null;
         }
 
         // 確認ページ表示用に加工、更新用に加工
@@ -203,6 +203,11 @@ class OfficeWeddingRsvpsController extends Controller
 
                 case 'country':
                     $assign['confirm'][$key] = $assign['countries'][$value] ?? null;
+                    $update[$key] = $value;
+                    break;
+
+                case 'kariyushi_pickup_location':
+                    $assign['confirm'][$key] = $assign['kariyushiPickupLocations'][$value] ?? null;
                     $update[$key] = $value;
                     break;
 
