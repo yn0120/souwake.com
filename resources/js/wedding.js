@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    initGallery();
     const photoUploader = initPhotoUploader();
     const companionRows = initCompanionRows();
     initPostalCodeLookup();
@@ -138,6 +139,77 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormPersistence(companionRows);
     initSubmitGuard(photoUploader);
 });
+
+/**
+ * ギャラリー：画像をクリックするとモーダルで拡大表示する。
+ *
+ * 矢印クリックで前後の画像へ移動し、最後の画像で次へ進むと1枚目に、
+ * 1枚目で前へ戻ると最後の画像に戻る（ループ）。背景クリック・×ボタン・Escで閉じる。
+ */
+function initGallery() {
+    const modal = document.querySelector('[data-gallery-modal]');
+    const modalImage = modal?.querySelector('[data-gallery-image]');
+    if (!modal || !modalImage) {
+        return;
+    }
+
+    // 画像未配置（プレースホルダー）のタイルはimgが無いため、クリック対象から除く
+    const items = Array.from(document.querySelectorAll('[data-gallery-item]')).filter((item) =>
+        item.querySelector('img')
+    );
+    if (items.length === 0) {
+        return;
+    }
+
+    let currentIndex = 0;
+
+    const show = (index) => {
+        currentIndex = (index + items.length) % items.length;
+        const img = items[currentIndex].querySelector('img');
+        modalImage.src = img.src;
+        modalImage.alt = img.alt;
+    };
+
+    const open = (index) => {
+        show(index);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+    };
+
+    const close = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    items.forEach((item, index) => {
+        item.addEventListener('click', () => open(index));
+    });
+
+    modal.querySelector('[data-gallery-prev]')?.addEventListener('click', () => show(currentIndex - 1));
+    modal.querySelector('[data-gallery-next]')?.addEventListener('click', () => show(currentIndex + 1));
+    modal.querySelector('[data-gallery-close]')?.addEventListener('click', close);
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (modal.classList.contains('hidden')) {
+            return;
+        }
+        if (event.key === 'Escape') {
+            close();
+        } else if (event.key === 'ArrowLeft') {
+            show(currentIndex - 1);
+        } else if (event.key === 'ArrowRight') {
+            show(currentIndex + 1);
+        }
+    });
+}
 
 /**
  * 入力内容をlocalStorageへ退避し、再訪時に復元する。

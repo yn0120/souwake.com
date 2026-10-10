@@ -70,7 +70,7 @@
         </div>
         <div class="relative z-10 mx-auto w-full max-w-5xl px-6 pb-16 pt-40 text-sand-50">
             <p class="wedding-reveal animate-fade-up text-xs tracking-[0.4em] text-sand-100/90">OKINAWA RESORT WEDDING</p>
-            <h1 class="wedding-reveal animate-fade-up mt-4 font-serif-jp text-4xl leading-relaxed sm:text-5xl">
+            <h1 class="wedding-reveal animate-fade-up mt-4 whitespace-nowrap font-serif-jp text-3xl leading-relaxed sm:text-5xl is-visible">
                 仲道 祐貴 &amp; 加藤 奈緒
             </h1>
             <p class="wedding-reveal animate-fade-up mt-5 text-base text-sand-100/95 sm:text-lg">{{ $weddingDateText }}</p>
@@ -140,7 +140,7 @@
         {{-- 沖縄リゾート婚のご案内 --}}
         <section class="wedding-reveal rounded-3xl bg-moss-700/95 px-6 py-14 text-sand-50 sm:px-12 sm:py-16">
             <p class="text-xs tracking-[0.35em] text-sand-100/80">FOR YOUR TRIP TO OKINAWA</p>
-            <h2 class="mt-3 font-serif-jp text-2xl">沖縄への旅程についてのお願い</h2>
+            <h2 class="mt-3 font-serif-jp text-2xl">沖縄への旅程について</h2>
             <p class="mt-6 max-w-2xl leading-loose text-sand-100/95">
                 当日は沖縄の地でのおもてなしとなるため、下記フォームにて到着日・出発日、ご宿泊先などをあわせてお知らせいただけますと幸いです。<br>
                 お食事にはえびや豚肉、マンゴーなど沖縄の食材を多く使用する予定です。アレルギーやご要望がございましたら、遠慮なくご記入ください。
@@ -156,12 +156,18 @@
             <h2 class="mt-3 text-center font-serif-jp text-2xl text-ink-800">ギャラリー</h2>
             <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                 @for ($i = 1; $i <= 6; $i++)
-                    @include('wedding/parts/photo', [
-                        'path' => "assets/img/wedding/gallery-{$i}.jpg",
-                        'alt' => "ギャラリー写真{$i}",
-                        'label' => "ギャラリー写真 {$i}",
-                        'class' => 'aspect-square',
-                    ])
+                    <button
+                        type="button"
+                        class="block w-full rounded-[1.75rem] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-moss-500"
+                        data-gallery-item
+                    >
+                        @include('wedding/parts/photo', [
+                            'path' => "assets/img/wedding/gallery-{$i}.jpg",
+                            'alt' => "ギャラリー写真{$i}",
+                            'label' => "ギャラリー写真 {$i}",
+                            'class' => 'aspect-square',
+                        ])
+                    </button>
                 @endfor
             </div>
         </section>
@@ -537,6 +543,38 @@
             </form>
         </section>
     </main>
+
+    {{-- ギャラリーのモーダル拡大表示（resources/js/wedding.jsが開閉・前後移動を制御） --}}
+    <div
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-900/90 p-4 backdrop-blur-sm"
+        data-gallery-modal
+    >
+        <button
+            type="button"
+            class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-sand-50/70 text-lg text-sand-50 transition hover:bg-sand-50 hover:text-moss-700"
+            data-gallery-close
+            aria-label="閉じる"
+        >
+            <span aria-hidden="true">×</span>
+        </button>
+        <button
+            type="button"
+            class="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sand-50/70 text-xl text-sand-50 transition hover:bg-sand-50 hover:text-moss-700 sm:left-6"
+            data-gallery-prev
+            aria-label="前の画像"
+        >
+            <span aria-hidden="true">‹</span>
+        </button>
+        <img src="" alt="" class="max-h-[85vh] max-w-[85vw] rounded-lg object-contain" data-gallery-image>
+        <button
+            type="button"
+            class="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sand-50/70 text-xl text-sand-50 transition hover:bg-sand-50 hover:text-moss-700 sm:right-6"
+            data-gallery-next
+            aria-label="次の画像"
+        >
+            <span aria-hidden="true">›</span>
+        </button>
+    </div>
 
     <footer class="border-t border-sand-200 py-10 text-center text-xs text-ink-700/60">
         <p>ご不明な点がございましたら、新郎新婦まで直接ご連絡ください。</p>
