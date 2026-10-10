@@ -61,7 +61,7 @@
     <section id="home" class="relative flex min-h-[92vh] items-end overflow-hidden">
         <div class="absolute inset-0">
             @include('wedding/parts/photo', [
-                'path' => 'assets/img/wedding/hero.jpg',
+                'path' => 'assets/img/wedding/106.jpg',
                 'alt' => '新郎新婦のメイン写真',
                 'label' => 'メイン写真（縦長推奨 1600×2000程度）',
                 'class' => 'h-full w-full rounded-none',
@@ -86,7 +86,7 @@
         <section id="greeting" class="grid gap-10 py-20 sm:grid-cols-2 sm:items-center sm:gap-14 sm:py-28">
             <div class="wedding-reveal">
                 @include('wedding/parts/photo', [
-                    'path' => 'assets/img/wedding/greeting.jpg',
+                    'path' => 'assets/img/wedding/096.jpg',
                     'alt' => '新郎新婦のスナップ写真',
                     'label' => 'お二人のスナップ写真',
                     'class' => 'aspect-[4/5]',
