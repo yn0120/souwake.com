@@ -29,6 +29,7 @@ class RsvpCreateRequest extends FormRequest
     public function rules()
     {
         $isUnitedStates = $this->input('country') === WeddingRsvpModel::COUNTRY_US;
+        $isAbsent = $this->input('attendance') === 'absent';
 
         // アメリカ在住のご家族はフリガナを書けないことがあるため、アメリカを選んだ場合は任意にする
         $kanaRules = $isUnitedStates
@@ -43,23 +44,29 @@ class RsvpCreateRequest extends FormRequest
             'kana_sei' => $kanaRules,
             'kana_mei' => $kanaRules,
 
-            // 住所は日本・アメリカで書式が異なるため、国に応じて検証を切り替える
-            'country' => ['bail', 'required', Rule::in(array_keys(WeddingRsvpModel::countryOptions()))],
+            // 住所は日本・アメリカで書式が異なるため、国に応じて検証を切り替える。
+            // ご欠席の場合は入力欄ごと隠しているため任意にする
+            'country' => $isAbsent
+                ? ['bail', 'nullable', Rule::in(array_keys(WeddingRsvpModel::countryOptions()))]
+                : ['bail', 'required', Rule::in(array_keys(WeddingRsvpModel::countryOptions()))],
             'postal_code' => $isUnitedStates
-                ? ['bail', 'required', 'regex:/^\d{5}(-?\d{4})?$/']
-                : ['bail', 'required', 'regex:/^\d{3}-?\d{4}$/'],
+                ? ['bail', $isAbsent ? 'nullable' : 'required', 'regex:/^\d{5}(-?\d{4})?$/']
+                : ['bail', $isAbsent ? 'nullable' : 'required', 'regex:/^\d{3}-?\d{4}$/'],
             'prefecture' => $isUnitedStates
                 ? ['bail', 'nullable', 'max:20']
-                : ['bail', 'required', 'max:20'],
+                : ['bail', $isAbsent ? 'nullable' : 'required', 'max:20'],
             'state' => $isUnitedStates
-                ? ['bail', 'required', Rule::in(array_keys(WeddingRsvpModel::usStates()))]
+                ? ['bail', $isAbsent ? 'nullable' : 'required', Rule::in(array_keys(WeddingRsvpModel::usStates()))]
                 : ['bail', 'nullable'],
-            'city' => ['bail', 'required', 'max:255'],
-            'address' => ['bail', 'required', 'max:255'],
+            'city' => ['bail', $isAbsent ? 'nullable' : 'required', 'max:255'],
+            'address' => ['bail', $isAbsent ? 'nullable' : 'required', 'max:255'],
             'building' => ['bail', 'nullable', 'max:255'],
 
-            // 国際電話番号（+1 555-123-4567 など）も受け付ける
-            'phone' => ['bail', 'required', 'regex:/^[0-9+\-\s()]{10,20}$/'],
+            // 国際電話番号（+1 555-123-4567 など）も受け付ける。
+            // ご欠席の場合はラベルを「電話番号」に変え、任意にする
+            'phone' => $isAbsent
+                ? ['bail', 'nullable', 'regex:/^[0-9+\-\s()]{10,20}$/']
+                : ['bail', 'required', 'regex:/^[0-9+\-\s()]{10,20}$/'],
             'email' => ['bail', 'required', 'email', 'max:255'],
 
             'allergy' => ['bail', 'nullable', 'max:1000'],
@@ -69,15 +76,16 @@ class RsvpCreateRequest extends FormRequest
             'hotel_name' => ['bail', 'nullable', 'max:255'],
             'kariyushi_pickup_location' => ['bail', 'nullable', Rule::in(array_keys(WeddingRsvpModel::kariyushiPickupLocationOptions()))],
 
-            // 同伴者は連名（複数）で受け取る。「同伴者なし」を選んだ場合は行が送られてきても丸ごと無視する。
+            // 同伴者は連名（複数）で受け取る。「同伴者なし」を選んだ場合や、
+            // ご欠席（入力欄ごと隠している）の場合は行が送られてきても丸ごと無視する。
             'companion_flag' => ['bail', 'required', Rule::in(['1', '0'])],
-            'companions' => ['bail', 'exclude_if:companion_flag,0', 'required', 'array', 'min:1', 'max:'.WeddingRsvpCompanionModel::MAX_COUNT],
-            'companions.*.name_sei' => ['bail', 'exclude_if:companion_flag,0', 'required', 'max:255'],
-            'companions.*.name_mei' => ['bail', 'exclude_if:companion_flag,0', 'required', 'max:255'],
-            'companions.*.kana_sei' => array_merge(['bail', 'exclude_if:companion_flag,0'], array_slice($kanaRules, 1)),
-            'companions.*.kana_mei' => array_merge(['bail', 'exclude_if:companion_flag,0'], array_slice($kanaRules, 1)),
-            'companions.*.meal' => ['bail', 'exclude_if:companion_flag,0', 'nullable', Rule::in(array_keys(WeddingRsvpCompanionModel::mealOptions()))],
-            'companions.*.child_info' => ['bail', 'exclude_if:companion_flag,0', 'nullable', 'max:1000'],
+            'companions' => ['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0', 'required', 'array', 'min:1', 'max:'.WeddingRsvpCompanionModel::MAX_COUNT],
+            'companions.*.name_sei' => ['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0', 'required', 'max:255'],
+            'companions.*.name_mei' => ['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0', 'required', 'max:255'],
+            'companions.*.kana_sei' => array_merge(['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0'], array_slice($kanaRules, 1)),
+            'companions.*.kana_mei' => array_merge(['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0'], array_slice($kanaRules, 1)),
+            'companions.*.meal' => ['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0', 'nullable', Rule::in(array_keys(WeddingRsvpCompanionModel::mealOptions()))],
+            'companions.*.child_info' => ['bail', 'exclude_if:attendance,absent', 'exclude_if:companion_flag,0', 'nullable', 'max:1000'],
 
             'message' => ['bail', 'nullable', 'max:2000'],
             'song_request' => ['bail', 'nullable', 'max:255'],

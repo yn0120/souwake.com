@@ -39,6 +39,9 @@
 
         // ご住所の国。既定は日本
         $selectedCountry = $old('country', App\Models\WeddingRsvpModel::COUNTRY_JP);
+
+        // ご欠席の場合は「お住まいの国」「同伴者・ご家族の情報」「楽曲のリクエスト」を隠し、電話番号も任意にする
+        $isAttending = $old('attendance', 'attending') === 'attending';
     @endphp
 
     {{-- ナビゲーション --}}
@@ -217,9 +220,9 @@
                     <input type="text" id="contact_note" name="contact_note" tabindex="-1" autocomplete="off">
                 </div>
 
-                {{-- 1. 基本情報 --}}
+                {{-- 基本情報 --}}
                 <fieldset class="space-y-6">
-                    <legend class="font-serif-jp text-lg text-moss-700">1. 基本情報</legend>
+                    <legend class="font-serif-jp text-lg text-moss-700">基本情報</legend>
 
                     <div>
                         <span class="{{ $labelClass }}">ご出欠 <span class="text-clay-600">※必須</span></span>
@@ -266,9 +269,10 @@
                         </div>
                     </div>
 
-                    {{-- ご住所の国。日本／アメリカで住所欄の項目・自動入力先のAPIを切り替える（wedding.js） --}}
-                    <div data-country-switch>
-                        <span class="{{ $labelClass }}">お住まいの国 / Country <span class="text-clay-600">※必須</span></span>
+                    {{-- ご住所の国。日本／アメリカで住所欄の項目・自動入力先のAPIを切り替える（wedding.js）。
+                         ご欠席の場合は任意項目のため隠す --}}
+                    <div data-country-switch id="country-field" class="{{ $isAttending ? '' : 'hidden' }}">
+                        <span class="{{ $labelClass }}">お住まいの国 / Country <span class="text-clay-600 {{ $isAttending ? '' : 'hidden' }}" data-attending-required-mark>※必須</span></span>
                         <div class="grid grid-cols-2 gap-3">
                             @foreach (App\Models\WeddingRsvpModel::countryOptions() as $value => $label)
                                 <label class="relative cursor-pointer">
@@ -285,8 +289,9 @@
                         @error('country') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
 
-                    <div>
-                        <p class="{{ $labelClass }}">ご住所 / Address <span class="text-clay-600">※必須</span></p>
+                    {{-- ご欠席の場合は入力欄ごと隠しているため任意にする --}}
+                    <div id="address-field" class="{{ $isAttending ? '' : 'hidden' }}">
+                        <p class="{{ $labelClass }}">ご住所 / Address <span class="text-clay-600 {{ $isAttending ? '' : 'hidden' }}" data-attending-required-mark>※必須</span></p>
                         <p class="{{ $noteClass }} mb-3">引き出物や内祝いの発送、案内状の送付に使用いたします。</p>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
@@ -339,7 +344,8 @@
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="{{ $labelClass }}" for="phone">電話番号（当日連絡がつく携帯番号） <span class="text-clay-600">※必須</span></label>
+                            {{-- ご欠席の場合はラベルから「（当日連絡がつく携帯番号）」を外し、任意項目にする --}}
+                            <label class="{{ $labelClass }}" for="phone">電話番号<span class="{{ $isAttending ? '' : 'hidden' }}" data-phone-attending-note>（当日連絡がつく携帯番号）</span> <span class="text-clay-600 {{ $isAttending ? '' : 'hidden' }}" data-attending-required-mark>※必須</span></label>
                             <input class="{{ $inputClass }}" type="tel" id="phone" name="phone" value="{{ $old('phone') }}"
                                 data-placeholder-jp="090-1234-5678"
                                 data-placeholder-us="+1 555-123-4567">
@@ -354,9 +360,9 @@
                     </div>
                 </fieldset>
 
-                {{-- 2. 沖縄リゾート婚特有の項目（ご出席の場合のみ表示） --}}
+                {{-- 沖縄リゾート婚特有の項目（ご出席の場合のみ表示） --}}
                 <fieldset id="attending-only-fields" class="space-y-6 {{ $old('attendance', 'attending') === 'attending' ? '' : 'hidden' }}">
-                    <legend class="font-serif-jp text-lg text-moss-700">2. ご旅程について</legend>
+                    <legend class="font-serif-jp text-lg text-moss-700">ご旅程について</legend>
 
                     <div>
                         <label class="{{ $labelClass }}" for="allergy">アレルギー・お食事に関するご要望</label>
@@ -418,9 +424,9 @@
                     </div>
                 </fieldset>
 
-                {{-- 3. 同伴者・ご家族の情報 --}}
-                <fieldset class="space-y-6">
-                    <legend class="font-serif-jp text-lg text-moss-700">3. 同伴者・ご家族の情報</legend>
+                {{-- 同伴者・ご家族の情報（ご欠席の場合は任意項目のため隠す） --}}
+                <fieldset id="companion-section" class="space-y-6 {{ $isAttending ? '' : 'hidden' }}">
+                    <legend class="font-serif-jp text-lg text-moss-700">同伴者・ご家族の情報</legend>
 
                     <div>
                         <span class="{{ $labelClass }}">同伴者の有無</span>
@@ -482,9 +488,9 @@
                     </template>
                 </fieldset>
 
-                {{-- 4. 任意項目・メッセージ --}}
+                {{-- 任意項目・メッセージ --}}
                 <fieldset class="space-y-6">
-                    <legend class="font-serif-jp text-lg text-moss-700">4. 任意項目・メッセージ</legend>
+                    <legend class="font-serif-jp text-lg text-moss-700">任意項目・メッセージ</legend>
 
                     <div>
                         <label class="{{ $labelClass }}" for="message">新郎新婦へのメッセージ</label>
@@ -492,7 +498,8 @@
                         @error('message') <p class="{{ $errorClass }}">{{ $message }}</p> @enderror
                     </div>
 
-                    <div>
+                    {{-- ご欠席の場合は任意項目のため隠す --}}
+                    <div id="song-request-field" class="{{ $isAttending ? '' : 'hidden' }}">
                         <label class="{{ $labelClass }}" for="song_request">楽曲のリクエスト（任意）</label>
                         <p class="{{ $noteClass }} mb-2">披露宴・パーティーで流してほしい曲があればお書きください。</p>
                         <input class="{{ $inputClass }}" type="text" id="song_request" name="song_request" placeholder="アーティスト名・曲名" value="{{ $old('song_request') }}">

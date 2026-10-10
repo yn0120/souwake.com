@@ -92,15 +92,26 @@ document.addEventListener('DOMContentLoaded', () => {
         revealTargets.forEach((el) => el.classList.add('is-visible'));
     }
 
-    // 出欠：欠席選択時は沖縄リゾート婚特有の項目を隠す
+    // 出欠：欠席選択時は沖縄リゾート婚特有の項目・お住まいの国・ご住所・同伴者情報・楽曲リクエストを隠し、電話番号も任意にする
     const attendanceRadios = document.querySelectorAll('input[name="attendance"]');
     const attendingOnlySection = document.getElementById('attending-only-fields');
+    const countryField = document.getElementById('country-field');
+    const addressField = document.getElementById('address-field');
+    const companionSection = document.getElementById('companion-section');
+    const songRequestField = document.getElementById('song-request-field');
+    const phoneAttendingNote = document.querySelector('[data-phone-attending-note]');
+    const attendingRequiredMarks = document.querySelectorAll('[data-attending-required-mark]');
     const toggleAttendingSection = () => {
         const selected = document.querySelector('input[name="attendance"]:checked');
-        if (!attendingOnlySection) {
-            return;
-        }
-        attendingOnlySection.classList.toggle('hidden', !selected || selected.value !== 'attending');
+        const isAttending = Boolean(selected) && selected.value === 'attending';
+
+        attendingOnlySection?.classList.toggle('hidden', !isAttending);
+        countryField?.classList.toggle('hidden', !isAttending);
+        addressField?.classList.toggle('hidden', !isAttending);
+        companionSection?.classList.toggle('hidden', !isAttending);
+        songRequestField?.classList.toggle('hidden', !isAttending);
+        phoneAttendingNote?.classList.toggle('hidden', !isAttending);
+        attendingRequiredMarks.forEach((mark) => mark.classList.toggle('hidden', !isAttending));
     };
     attendanceRadios.forEach((radio) => radio.addEventListener('change', toggleAttendingSection));
     toggleAttendingSection();

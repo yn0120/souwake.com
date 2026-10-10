@@ -48,6 +48,14 @@ class WeddingRsvpController extends Controller
         $input['kana_sei'] ??= '';
         $input['kana_mei'] ??= '';
 
+        // ご欠席の場合はお住まいの国・ご住所・電話番号も任意のため未入力で届く。カラムはNOT NULLなので空文字で保存する
+        $input['country'] ??= WeddingRsvpModel::COUNTRY_JP;
+        $input['postal_code'] ??= '';
+        $input['prefecture'] ??= '';
+        $input['city'] ??= '';
+        $input['address'] ??= '';
+        $input['phone'] ??= '';
+
         // アメリカの住所は州をprefectureカラムへ寄せ、日本の都道府県と同じ位置に保存する
         $state = $input['state'] ?? null;
         unset($input['state']);
